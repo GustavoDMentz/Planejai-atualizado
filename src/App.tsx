@@ -3,7 +3,8 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { db, Transaction } from './db';
 import { Dashboard } from './components/Dashboard';
 import { TranslatorDrawer } from './components/TranslatorDrawer';
-import { Mic, MicOff, Check, X } from 'lucide-react';
+import { ManualEntryDrawer } from './components/ManualEntryDrawer';
+import { Mic, MicOff, Check, X, Plus } from 'lucide-react';
 
 type ExtractedData = {
   type: 'income' | 'expense';
@@ -19,6 +20,7 @@ export default function App() {
   const [statusMessage, setStatusMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isManualOpen, setIsManualOpen] = useState(false);
 
   const startListening = useCallback(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -106,6 +108,11 @@ export default function App() {
     setStatusMessage('');
   };
 
+  const handleManualSuccess = () => {
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 2500);
+  };
+
   return (
     <main className="min-h-screen bg-bg text-text font-sans flex flex-col" aria-label="Tela principal do Planejaí">
       <header className="p-6 pb-2">
@@ -119,20 +126,30 @@ export default function App() {
         <Dashboard />
       </div>
 
-      {!showConfirmation && (
+      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-4 z-40">
         <button
-          onClick={startListening}
-          disabled={isListening || isLoading}
-          className={`fixed bottom-8 left-1/2 -translate-x-1/2 w-16 h-16 rounded-full flex items-center justify-center shadow-xl transition-all focus:outline-none focus:ring-4 focus:ring-calm z-40 ${
-            isListening ? 'bg-alert animate-pulse' : 'bg-success hover:opacity-90'
-          }`}
-          aria-label={isListening ? 'Ouvindo sua voz' : 'Clique para falar'}
+          onClick={() => setIsManualOpen(true)}
+          className="w-14 h-14 rounded-full bg-calm flex items-center justify-center shadow-lg hover:bg-calm/80 transition focus:outline-none focus:ring-4 focus:ring-calm"
+          aria-label="Adicionar transação manualmente"
         >
-          {isListening ? <MicOff size={24} strokeWidth={2} className="text-[#333333]" /> : <Mic size={24} strokeWidth={2} className="text-[#333333]" />}
+          <Plus size={24} strokeWidth={2} className="text-[#333333]" />
         </button>
-      )}
+        {!showConfirmation && (
+          <button
+            onClick={startListening}
+            disabled={isListening || isLoading}
+            className={`w-16 h-16 rounded-full flex items-center justify-center shadow-xl transition-all focus:outline-none focus:ring-4 focus:ring-calm ${
+              isListening ? 'bg-alert animate-pulse' : 'bg-success hover:opacity-90'
+            }`}
+            aria-label={isListening ? 'Ouvindo sua voz' : 'Clique para falar'}
+          >
+            {isListening ? <MicOff size={24} strokeWidth={2} className="text-[#333333]" /> : <Mic size={24} strokeWidth={2} className="text-[#333333]" />}
+          </button>
+        )}
+      </div>
 
       <TranslatorDrawer />
+      <ManualEntryDrawer open={isManualOpen} onOpenChange={setIsManualOpen} onSuccess={handleManualSuccess} />
 
       <Dialog.Root open={showConfirmation} onOpenChange={(open) => !open && handleRetry()}>
         <Dialog.Portal>

@@ -11,6 +11,7 @@
   "dependencies": {
     "@fontsource/lexend": "^5.0.0",
     "@radix-ui/react-dialog": "^1.0.5",
+    "@radix-ui/react-toggle-group": "^1.0.4",
     "dexie": "^4.0.0",
     "dexie-react-hooks": "^1.1.7",
     "lucide-react": "^0.300.0",
