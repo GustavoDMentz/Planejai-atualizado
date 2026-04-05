@@ -6,7 +6,7 @@ import { ManualEntryDrawer } from './components/ManualEntryDrawer';
 import { VoiceConfirmationDrawer } from './components/VoiceConfirmationDrawer';
 import { BrowserWarningModal } from './components/BrowserWarningModal';
 import { InsightsDrawer } from './components/InsightsDrawer';
-import { Mic, MicOff, Check, Plus } from 'lucide-react';
+import { Mic, MicOff, Check, Plus, Loader2 } from 'lucide-react';
 import { extractTransactionFromAudio } from './lib/gemini';
 
 type ExtractedData = {
@@ -19,7 +19,6 @@ type ExtractedData = {
 export default function App() {
   const [extractedData, setExtractedData] = useState<ExtractedData | null>(null);
   const [showVoiceConfirmation, setShowVoiceConfirmation] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isManualOpen, setIsManualOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -27,50 +26,29 @@ export default function App() {
   const [isInsightsOpen, setIsInsightsOpen] = useState(false);
   const [isTranslatorOpen, setIsTranslatorOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  
   const [isRecording, setIsRecording] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(''), 3000);
   };
 
-  const blobToBase64 = (blob: Blob): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = (reader.result as string).split(',')[1];
-        resolve(base64String);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  };
-
-  const sendToGemini = async (base64Audio: string) => {
-    setIsLoading(true);
-    try {
-      const result = await extractTransactionFromAudio(base64Audio);
-      
-      setExtractedData({
-        type: result.tipo === 'entrada' ? 'income' : 'expense',
-        amount: result.valor,
-        description: result.descricao,
-        category: result.categoria
-      });
-      setShowVoiceConfirmation(true);
-    } catch {
-      showToast('O barulho do mundo me atrapalhou um pouco. Pode repetir com calma?');
-    } finally {
-      setIsLoading(false);
+  const toggleRecording = useCallback(async () => {
+    if (isRecording) {
+      mediaRecorderRef.current?.stop();
+      if (timerRef.current) clearTimeout(timerRef.current);
+      return;
     }
-  };
 
-  const startRecording = useCallback(async () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      setShowBrowserWarning(true);
+      setIsManualOpen(true);
+      showToast('Seu navegador não suporta gravação. Vamos digitar?');
       return;
     }
 
@@ -93,24 +71,43 @@ export default function App() {
           return;
         }
 
+        setIsProcessing(true);
         const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
-        const base64 = await blobToBase64(blob);
-        await sendToGemini(base64);
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const base64 = (reader.result as string).split(',')[1];
+          try {
+            const result = await extractTransactionFromAudio(base64);
+            setExtractedData({
+              type: result.tipo === 'entrada' ? 'income' : 'expense',
+              amount: result.valor,
+              description: result.descricao,
+              category: result.categoria
+            });
+            setShowVoiceConfirmation(true);
+          } catch {
+            showToast('O barulho do mundo me atrapalhou um pouco. Pode repetir com calma?');
+          } finally {
+            setIsProcessing(false);
+          }
+        };
+        reader.readAsDataURL(blob);
       };
 
       mediaRecorder.start();
       setIsRecording(true);
 
-      setTimeout(() => {
+      timerRef.current = setTimeout(() => {
         if (mediaRecorderRef.current?.state === 'recording') {
           mediaRecorderRef.current.stop();
         }
-      }, 5000);
+      }, 4000);
     } catch (err) {
       console.error('Erro ao acessar microfone:', err);
-      showToast('Não consegui acessar o microfone. Verifique as permissões.');
+      setIsManualOpen(true);
+      showToast('Não consegui acessar o microfone. Vamos digitar?');
     }
-  }, []);
+  }, [isRecording]);
 
   const handleVoiceConfirm = async () => {
     if (!extractedData) return;
@@ -168,8 +165,10 @@ export default function App() {
       </div>
 
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-40">
-        {isRecording && (
-          <span className="text-sm font-medium text-alert animate-pulse">Gravando áudio...</span>
+        {(isRecording || isProcessing) && (
+          <span className={`text-sm font-medium animate-pulse ${isProcessing ? 'text-calm' : 'text-alert'}`}>
+            {isProcessing ? 'Processando com calma...' : 'Gravando áudio...'}
+          </span>
         )}
         <div className="flex items-center gap-4">
           <button
@@ -181,14 +180,20 @@ export default function App() {
           </button>
           {!showVoiceConfirmation && (
             <button
-              onClick={startRecording}
-              disabled={isRecording || isLoading}
+              onClick={toggleRecording}
+              disabled={isProcessing}
               className={`w-16 h-16 rounded-full flex items-center justify-center shadow-xl transition-all focus:outline-none focus:ring-4 focus:ring-calm ${
-                isRecording ? 'bg-alert animate-pulse' : 'bg-success hover:opacity-90'
+                isRecording ? 'bg-alert animate-pulse' : isProcessing ? 'bg-calm/50 cursor-wait' : 'bg-success hover:opacity-90'
               }`}
-              aria-label={isRecording ? 'Gravando sua voz' : 'Clique para gravar'}
+              aria-label={isRecording ? 'Parar gravação' : 'Clique para gravar'}
             >
-              {isRecording ? <MicOff size={24} strokeWidth={2} className="text-[#333333]" /> : <Mic size={24} strokeWidth={2} className="text-[#333333]" />}
+              {isProcessing ? (
+                <Loader2 size={24} strokeWidth={2} className="text-[#333333] animate-spin" />
+              ) : isRecording ? (
+                <MicOff size={24} strokeWidth={2} className="text-[#333333]" />
+              ) : (
+                <Mic size={24} strokeWidth={2} className="text-[#333333]" />
+              )}
             </button>
           )}
         </div>
