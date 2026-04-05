@@ -10,11 +10,19 @@ const dictionary = [
   { term: 'Margem de Lucro', translation: 'A porcentagem que realmente sobra para você depois de pagar todos os custos de um produto.' },
 ];
 
-export function TranslatorDrawer() {
+interface TranslatorDrawerProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function TranslatorDrawer({ open: controlledOpen, onOpenChange }: TranslatorDrawerProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const [open, setOpen] = useState(false);
   const startY = useRef(0);
   const contentRef = useRef<HTMLDivElement>(null);
+
+  const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setIsOpen = onOpenChange || setInternalOpen;
 
   const filtered = dictionary.filter(d =>
     d.term.toLowerCase().includes(search.toLowerCase()) ||
@@ -28,22 +36,22 @@ export function TranslatorDrawer() {
   const handleTouchEnd = (e: React.TouchEvent) => {
     const endY = e.changedTouches[0].clientY;
     if (endY - startY.current > 60) {
-      setOpen(false);
+      setIsOpen(false);
     }
   };
 
   useEffect(() => {
-    if (open) {
+    if (isOpen) {
       const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') setOpen(false);
+        if (e.key === 'Escape') setIsOpen(false);
       };
       window.addEventListener('keydown', handleKeyDown);
       return () => window.removeEventListener('keydown', handleKeyDown);
     }
-  }, [open]);
+  }, [isOpen, setIsOpen]);
 
   return (
-    <Dialog.Root open={open} onOpenChange={setOpen}>
+    <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
       <Dialog.Trigger asChild>
         <button
           className="fixed bottom-28 left-1/2 -translate-x-1/2 bg-calm/20 backdrop-blur-md text-text px-5 py-2.5 rounded-full font-medium text-sm shadow-lg flex items-center gap-2 hover:bg-calm/30 transition focus:outline-none focus:ring-2 focus:ring-calm z-30"

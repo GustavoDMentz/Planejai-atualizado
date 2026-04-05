@@ -5,7 +5,8 @@ import { TranslatorDrawer } from './components/TranslatorDrawer';
 import { ManualEntryDrawer } from './components/ManualEntryDrawer';
 import { VoiceConfirmationDrawer } from './components/VoiceConfirmationDrawer';
 import { BrowserWarningModal } from './components/BrowserWarningModal';
-import { Mic, MicOff, Check, Plus } from 'lucide-react';
+import { InsightsDrawer } from './components/InsightsDrawer';
+import { Mic, MicOff, Check, Plus, BarChart } from 'lucide-react';
 
 type ExtractedData = {
   type: 'income' | 'expense';
@@ -23,6 +24,8 @@ export default function App() {
   const [isManualOpen, setIsManualOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [showBrowserWarning, setShowBrowserWarning] = useState(false);
+  const [isInsightsOpen, setIsInsightsOpen] = useState(false);
+  const [isTranslatorOpen, setIsTranslatorOpen] = useState(false);
 
   const startListening = useCallback(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -126,8 +129,15 @@ export default function App() {
 
   return (
     <main className="min-h-screen bg-bg text-text font-sans flex flex-col" aria-label="Tela principal do Planejaí">
-      <header className="p-6 pb-2">
+      <header className="p-6 pb-2 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-text">Planejaí</h1>
+        <button
+          onClick={() => setIsInsightsOpen(true)}
+          className="p-2 rounded-full hover:bg-calm/20 transition focus:outline-none focus:ring-2 focus:ring-calm"
+          aria-label="Abrir meus gráficos"
+        >
+          <BarChart size={24} strokeWidth={1.5} className="text-text" />
+        </button>
       </header>
 
       <div className="flex-1 overflow-y-auto">
@@ -156,7 +166,7 @@ export default function App() {
         )}
       </div>
 
-      <TranslatorDrawer />
+      <TranslatorDrawer open={isTranslatorOpen} onOpenChange={setIsTranslatorOpen} />
       <ManualEntryDrawer 
         open={isDrawerOpen} 
         onOpenChange={(open) => {
@@ -181,6 +191,12 @@ export default function App() {
         open={showBrowserWarning} 
         onClose={() => setShowBrowserWarning(false)} 
         onOpenManual={() => setIsManualOpen(true)} 
+      />
+
+      <InsightsDrawer 
+        open={isInsightsOpen} 
+        onOpenChange={setIsInsightsOpen} 
+        onOpenTranslator={() => setIsTranslatorOpen(true)} 
       />
 
       {showSuccess && (
