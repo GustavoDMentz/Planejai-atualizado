@@ -5,7 +5,10 @@ export interface ExtractedTransaction {
   descricao: string;
 }
 
-export async function extractTransactionFromAudio(base64Audio: string): Promise<ExtractedTransaction> {
+export async function extractTransactionFromAudio(
+  base64Audio: string,
+  mimeType: string = 'audio/webm'
+): Promise<ExtractedTransaction> {
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
   if (!apiKey) throw new Error('API Key não configurada');
 
@@ -16,7 +19,7 @@ export async function extractTransactionFromAudio(base64Audio: string): Promise<
       contents: [{
         parts: [
           { text: "Você é um extrator de dados JSON. Receba o áudio e retorne APENAS um objeto JSON no formato: {\"valor\": number, \"categoria\": string, \"tipo\": \"entrada\" | \"saida\", \"descricao\": string}. Não adicione explicações ou Markdown fora do JSON." },
-          { inline_data: { mime_type: "audio/webm", data: base64Audio } }
+          { inline_data: { mime_type: mimeType, data: base64Audio } }
         ]
       }],
       generationConfig: {

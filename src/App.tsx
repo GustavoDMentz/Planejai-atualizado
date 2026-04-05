@@ -33,6 +33,7 @@ export default function App() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const mimeTypeRef = useRef<string>('audio/webm');
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -54,15 +55,20 @@ export default function App() {
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+      const mediaRecorder = new MediaRecorder(stream, { mimeType });
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
+      mimeTypeRef.current = mimeType;
 
       mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) chunksRef.current.push(e.data);
       };
 
       mediaRecorder.onstop = async () => {
+        console.log('mimeType real:', mediaRecorder.mimeType);
+        console.log('chunks:', chunksRef.current.length, 'blob size:', chunksRef.current.reduce((a, b) => a + b.size, 0));
+        
         setIsRecording(false);
         stream.getTracks().forEach(track => track.stop());
         
@@ -72,12 +78,12 @@ export default function App() {
         }
 
         setIsProcessing(true);
-        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        const blob = new Blob(chunksRef.current, { type: mimeTypeRef.current });
         const reader = new FileReader();
         reader.onloadend = async () => {
           const base64 = (reader.result as string).split(',')[1];
           try {
-            const result = await extractTransactionFromAudio(base64);
+            const result = await extractTransactionFromAudio(base64, mimeTypeRef.current);
             setExtractedData({
               type: result.tipo === 'entrada' ? 'income' : 'expense',
               amount: result.valor,
