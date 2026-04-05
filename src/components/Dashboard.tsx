@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { ArrowUp, ArrowDown, Star, Clock } from 'lucide-react';
-import { db } from '../db';
+import { db, Transaction } from '../db';
 
 const COLORS = {
   green: '#0F2A1A',
@@ -8,7 +8,11 @@ const COLORS = {
   blue: '#00212C',
 };
 
-export function Dashboard() {
+interface DashboardProps {
+  onEdit: (transaction: Transaction) => void;
+}
+
+export function Dashboard({ onEdit }: DashboardProps) {
   const transactions = useLiveQuery(() => db.transactions.orderBy('timestamp').reverse().toArray());
 
   const isLoading = transactions === undefined;
@@ -72,10 +76,12 @@ export function Dashboard() {
             {recent.map((t) => (
               <li
                 key={t.id}
-                className="p-4 rounded-2xl bg-[#3A3A3A] border border-calm/20 flex items-center justify-between hover:bg-[#404040] transition cursor-pointer focus-within:ring-2 focus-within:ring-calm"
+                onClick={() => onEdit(t)}
+                className="p-4 rounded-2xl bg-[#3A3A3A] border border-calm/20 flex items-center justify-between hover:bg-[#404040] hover:border-calm/40 transition cursor-pointer focus-within:ring-2 focus-within:ring-calm"
                 tabIndex={0}
                 role="button"
-                aria-label={`Transação: ${t.description}, valor ${formatCurrency(t.amount)}`}
+                onKeyDown={(e) => e.key === 'Enter' && onEdit(t)}
+                aria-label={`Editar transação: ${t.description}, valor ${formatCurrency(t.amount)}`}
               >
                 <div className="flex items-center gap-3">
                   <div className={`w-2.5 h-2.5 rounded-full ${t.type === 'income' ? 'bg-success' : 'bg-alert'}`} aria-hidden="true" />

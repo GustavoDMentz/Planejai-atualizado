@@ -21,6 +21,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isManualOpen, setIsManualOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
   const startListening = useCallback(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -108,10 +109,18 @@ export default function App() {
     setStatusMessage('');
   };
 
-  const handleManualSuccess = () => {
+  const handleDrawerSuccess = () => {
+    setEditingTransaction(null);
+    setIsManualOpen(false);
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 2500);
   };
+
+  const handleEdit = (t: Transaction) => {
+    setEditingTransaction(t);
+  };
+
+  const isDrawerOpen = isManualOpen || !!editingTransaction;
 
   return (
     <main className="min-h-screen bg-bg text-text font-sans flex flex-col" aria-label="Tela principal do Planejaí">
@@ -123,7 +132,7 @@ export default function App() {
       </header>
 
       <div className="flex-1 overflow-y-auto">
-        <Dashboard />
+        <Dashboard onEdit={handleEdit} />
       </div>
 
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-4 z-40">
@@ -149,7 +158,17 @@ export default function App() {
       </div>
 
       <TranslatorDrawer />
-      <ManualEntryDrawer open={isManualOpen} onOpenChange={setIsManualOpen} onSuccess={handleManualSuccess} />
+      <ManualEntryDrawer 
+        open={isDrawerOpen} 
+        onOpenChange={(open) => {
+          if (!open) {
+            setIsManualOpen(false);
+            setEditingTransaction(null);
+          }
+        }} 
+        onSuccess={handleDrawerSuccess} 
+        transaction={editingTransaction} 
+      />
 
       <Dialog.Root open={showConfirmation} onOpenChange={(open) => !open && handleRetry()}>
         <Dialog.Portal>
