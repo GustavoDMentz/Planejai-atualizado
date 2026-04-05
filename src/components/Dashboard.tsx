@@ -35,13 +35,13 @@ export function Dashboard() {
   return (
     <div className="w-full max-w-md mx-auto px-4 pb-40 space-y-6" aria-label="Painel financeiro">
       <section className="grid gap-5" aria-label="Resumo do mês">
-        {/* Card Verde - Entradas (TESTE HOT RELOAD: text-red-500) */}
+        {/* Card Verde - Entradas */}
         <div className="p-6 rounded-3xl bg-success flex items-center justify-between shadow-sm" aria-label="Dinheiro que entrou este mês">
           <div>
-            <p className="text-base font-medium mb-1 text-red-500">O que entrou este mês</p>
-            <p className="text-3xl font-bold text-red-500">{formatCurrency(summary.income)}</p>
+            <p className="text-base font-medium mb-1" style={{ color: 'rgba(15, 42, 26, 0.8)' }}>O que entrou este mês</p>
+            <p className="text-3xl font-bold" style={{ color: '#0F2A1A' }}>{formatCurrency(summary.income)}</p>
           </div>
-          <ArrowUp size={32} strokeWidth={2} className="text-red-500" aria-hidden="true" />
+          <ArrowUp size={32} strokeWidth={2} style={{ color: 'rgba(15, 42, 26, 0.8)' }} aria-hidden="true" />
         </div>
 
         {/* Card Laranja - Saídas */}
@@ -50,7 +50,7 @@ export function Dashboard() {
             <p className="text-base font-medium mb-1" style={{ color: 'rgba(45, 22, 0, 0.8)' }}>O que saiu este mês</p>
             <p className="text-3xl font-bold" style={{ color: '#2D1600' }}>{formatCurrency(summary.expense)}</p>
           </div>
-          <ArrowDown size={32} strokeWidth={2} style={{ color: 'rgba(45, 22, 0, 0.7)' }} aria-hidden="true" />
+          <ArrowDown size={32} strokeWidth={2} style={{ color: 'rgba(45, 22, 0, 0.8)' }} aria-hidden="true" />
         </div>
 
         {/* Card Azul - Sobrou */}
