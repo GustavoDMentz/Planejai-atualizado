@@ -27,7 +27,6 @@ export default function App() {
   const [isInsightsOpen, setIsInsightsOpen] = useState(false);
   const [isTranslatorOpen, setIsTranslatorOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-  const [isWaiting, setIsWaiting] = useState(false);
   
   const errorCountRef = useRef(0);
 
@@ -43,22 +42,22 @@ export default function App() {
       return;
     }
 
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'pt-BR';
-    recognition.interimResults = true;
-    recognition.continuous = false;
-    recognition.maxAlternatives = 1;
+    errorCountRef.current = 0;
 
-    recognition.onstart = () => {
-      setIsListening(true);
-      setIsWaiting(false);
-    };
+    // Delay de 300ms para evitar ruído de clique/toque
+    setTimeout(() => {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'pt-BR';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      recognition.continuous = false;
 
-    recognition.onresult = async (event: any) => {
-      const current = event.results[event.results.length - 1];
-      const transcript = current[0].transcript;
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
 
-      if (current.isFinal) {
+      recognition.onresult = async (event: any) => {
+        const transcript = event.results[0][0].transcript;
         setIsListening(false);
         setIsLoading(true);
         errorCountRef.current = 0;
@@ -93,47 +92,41 @@ export default function App() {
         } finally {
           setIsLoading(false);
         }
-      }
-    };
+      };
 
-    recognition.onerror = (event: any) => {
-      console.error('Erro no reconhecimento de voz:', event.error);
-      if (event.error === 'no-speech') {
-        errorCountRef.current += 1;
-        if (errorCountRef.current < 3) {
-          setIsWaiting(true);
-          setTimeout(() => {
-            try { recognition.start(); } catch (e) {}
-          }, 1000);
+      recognition.onerror = (event: any) => {
+        console.error('Erro no reconhecimento de voz:', event.error);
+        if (event.error === 'no-speech' || event.error === 'audio-capture') {
+          // Tratamento silencioso
+          setIsListening(false);
+        } else if (event.error === 'network') {
+          setIsListening(false);
+          showToast('Conexão instável. Verifique sua internet.');
         } else {
           setIsListening(false);
-          setIsWaiting(false);
-          errorCountRef.current = 0;
-          showToast('Não consegui ouvir nada. Tente falar mais perto do microfone.');
+          errorCountRef.current += 1;
+          if (errorCountRef.current >= 2) {
+            showToast('A voz não está cooperando. Vamos digitar?');
+            setIsManualOpen(true);
+            errorCountRef.current = 0;
+          } else {
+            showToast('O barulho do mundo me atrapalhou um pouco. Pode repetir com calma?');
+          }
         }
-      } else if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-        setIsListening(false);
-        errorCountRef.current = 0;
-        showToast('Permissão de microfone negada. Verifique as configurações.');
-      } else {
-        setIsListening(false);
-        errorCountRef.current = 0;
-        showToast('O barulho do mundo me atrapalhou um pouco. Pode repetir com calma?');
-      }
-    };
+      };
 
-    recognition.onend = () => {
-      if (!isWaiting) {
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      try {
+        recognition.start();
+      } catch (e) {
+        console.error('Falha ao iniciar reconhecimento:', e);
         setIsListening(false);
       }
-    };
-
-    try {
-      recognition.start();
-    } catch (e) {
-      console.error('Falha ao iniciar reconhecimento:', e);
-    }
-  }, [isWaiting]);
+    }, 300);
+  }, []);
 
   const handleVoiceConfirm = async () => {
     if (!extractedData) return;
@@ -191,11 +184,8 @@ export default function App() {
       </div>
 
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-40">
-        {isListening && !isWaiting && (
+        {isListening && (
           <span className="text-sm font-medium text-alert animate-pulse">Estou ouvindo...</span>
-        )}
-        {isWaiting && (
-          <span className="text-sm font-medium text-calm animate-pulse">Aguardando sua voz...</span>
         )}
         <div className="flex items-center gap-4">
           <button
