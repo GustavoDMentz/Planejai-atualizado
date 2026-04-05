@@ -35,5 +35,6 @@ export async function extractTransactionFromAudio(
 
   const data = await response.json();
   const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  console.log('Resposta bruta Gemini:', rawText);
   return JSON.parse(rawText) as ExtractedTransaction;
 }
