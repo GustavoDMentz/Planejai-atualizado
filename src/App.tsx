@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import * as Dialog from '@radix-ui/react-dialog';
 import { db, Transaction } from './db';
 import { Dashboard } from './components/Dashboard';
 import { TranslatorDrawer } from './components/TranslatorDrawer';
@@ -46,12 +47,14 @@ export default function App() {
         const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
         if (!apiKey) throw new Error('API Key não configurada');
 
+        const systemPrompt = `Você é o assistente financeiro do Planejaí. Extraia dados de frases informais. Se o usuário disser 'Recebi 2k do job de ontem', você deve retornar { "type": "income", "amount": 2000, "description": "Job de ontem", "category": "Serviços" }. Se ele disser 'Paguei o agiota 50 conto', retorne { "type": "expense", "amount": 50, "description": "Pagamento de dívida", "category": "Outros" }. Retorne APENAS JSON puro.`;
+
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{
-              parts: [{ text: `Você é um extrator de dados financeiros para pessoas com TDAH e Autismo. Seja extremamente preciso. Pegue a frase do usuário e retorne APENAS um objeto JSON no formato: { type: 'income'|'expense', amount: number, description: string, category: string }. Não adicione explicações, crases de markdown ou qualquer outro texto.\n\nFrase: "${transcript}"` }]
+              parts: [{ text: `${systemPrompt}\n\nFrase do usuário: "${transcript}"` }]
             }]
           })
         });
@@ -131,15 +134,18 @@ export default function App() {
 
       <TranslatorDrawer />
 
-      {showConfirmation && extractedData && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4" role="dialog" aria-modal="true" aria-label="Confirmação de dados">
-          <section className="w-full max-w-md p-6 rounded-3xl bg-[#333333] border-2 border-calm/30 shadow-2xl">
-            <h2 className="text-xl font-semibold mb-4 text-center text-text">Eu entendi direito?</h2>
-            <div className="space-y-3 mb-6 text-lg text-text">
-              <p><strong>Valor:</strong> R$ {extractedData.amount.toFixed(2).replace('.', ',')}</p>
-              <p><strong>Descrição:</strong> {extractedData.description}</p>
-              <p><strong>Categoria:</strong> {extractedData.category}</p>
-            </div>
+      <Dialog.Root open={showConfirmation} onOpenChange={(open) => !open && handleRetry()}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm animate-overlayShow" />
+          <Dialog.Content className="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md p-6 rounded-3xl bg-[#333333] border-2 border-calm/30 shadow-2xl focus:outline-none animate-contentShow">
+            <Dialog.Title className="text-xl font-semibold mb-4 text-center text-text">Eu entendi direito?</Dialog.Title>
+            {extractedData && (
+              <div className="space-y-3 mb-6 text-lg text-text">
+                <p><strong>Valor:</strong> R$ {extractedData.amount.toFixed(2).replace('.', ',')}</p>
+                <p><strong>Descrição:</strong> {extractedData.description}</p>
+                <p><strong>Categoria:</strong> {extractedData.category}</p>
+              </div>
+            )}
             <div className="flex flex-col gap-4">
               <button
                 onClick={handleSave}
@@ -148,17 +154,19 @@ export default function App() {
               >
                 <Check size={20} strokeWidth={2} /> Sim, salvar
               </button>
-              <button
-                onClick={handleRetry}
-                className="w-full py-4 rounded-xl bg-alert text-[#333333] font-semibold text-lg flex items-center justify-center gap-2 hover:opacity-90 transition focus:outline-none focus:ring-4 focus:ring-calm"
-                aria-label="Não, tentar de novo"
-              >
-                <X size={20} strokeWidth={2} /> Não, tentar de novo
-              </button>
+              <Dialog.Close asChild>
+                <button
+                  onClick={handleRetry}
+                  className="w-full py-4 rounded-xl bg-alert text-[#333333] font-semibold text-lg flex items-center justify-center gap-2 hover:opacity-90 transition focus:outline-none focus:ring-4 focus:ring-calm"
+                  aria-label="Não, tentar de novo"
+                >
+                  <X size={20} strokeWidth={2} /> Não, tentar de novo
+                </button>
+              </Dialog.Close>
             </div>
-          </section>
-        </div>
-      )}
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
 
       {showSuccess && (
         <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none" aria-live="polite">
