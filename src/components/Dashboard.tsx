@@ -38,28 +38,28 @@ export function Dashboard() {
         {/* Card Verde - Entradas */}
         <div className="p-6 rounded-3xl bg-success flex items-center justify-between shadow-sm" aria-label="Dinheiro que entrou este mês">
           <div>
-            <p className="text-base font-medium mb-1" style={{ color: 'rgba(15, 42, 26, 0.8)' }}>O que entrou este mês</p>
-            <p className="text-3xl font-bold" style={{ color: '#0F2A1A' }}>{formatCurrency(summary.income)}</p>
+            <p className="text-base font-medium mb-1 text-emerald-950/80">O que entrou este mês</p>
+            <p className="text-3xl font-bold text-emerald-950">{formatCurrency(summary.income)}</p>
           </div>
-          <ArrowUp size={32} strokeWidth={2} style={{ color: 'rgba(15, 42, 26, 0.8)' }} aria-hidden="true" />
+          <ArrowUp size={32} strokeWidth={2} className="text-emerald-950/80" aria-hidden="true" />
         </div>
 
         {/* Card Laranja - Saídas */}
         <div className="p-6 rounded-3xl bg-alert flex items-center justify-between shadow-sm" aria-label="Dinheiro que saiu este mês">
           <div>
-            <p className="text-base font-medium mb-1" style={{ color: 'rgba(45, 22, 0, 0.8)' }}>O que saiu este mês</p>
-            <p className="text-3xl font-bold" style={{ color: '#2D1600' }}>{formatCurrency(summary.expense)}</p>
+            <p className="text-base font-medium mb-1 text-orange-950/80">O que saiu este mês</p>
+            <p className="text-3xl font-bold text-orange-950">{formatCurrency(summary.expense)}</p>
           </div>
-          <ArrowDown size={32} strokeWidth={2} style={{ color: 'rgba(45, 22, 0, 0.8)' }} aria-hidden="true" />
+          <ArrowDown size={32} strokeWidth={2} className="text-orange-950/80" aria-hidden="true" />
         </div>
 
         {/* Card Azul - Sobrou */}
         <div className="p-6 rounded-3xl bg-calm flex items-center justify-between shadow-sm" aria-label="Saldo restante para você">
           <div>
-            <p className="text-base font-medium mb-1" style={{ color: 'rgba(0, 33, 44, 0.8)' }}>O que sobrou para você</p>
-            <p className="text-3xl font-bold" style={{ color: '#00212C' }}>{formatCurrency(summary.balance)}</p>
+            <p className="text-base font-medium mb-1 text-cyan-950/80">O que sobrou para você</p>
+            <p className="text-3xl font-bold text-cyan-950">{formatCurrency(summary.balance)}</p>
           </div>
-          <Star size={36} strokeWidth={1.5} fill="#00212C" style={{ color: 'rgba(0, 33, 44, 0.8)' }} aria-hidden="true" />
+          <Star size={36} strokeWidth={1.5} fill="currentColor" className="text-cyan-950/80" aria-hidden="true" />
         </div>
       </section>
 
