@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowUp, ArrowDown, Star } from 'lucide-react';
+import { ArrowUp, ArrowDown, Star, Clock } from 'lucide-react';
 import { getMonthlySummary, getRecentTransactions, Transaction } from '../db';
 
 export function Dashboard() {
@@ -17,62 +17,76 @@ export function Dashboard() {
     loadData();
   }, []);
 
-  if (loading) return <p className="text-center text-text/60 mt-12" aria-live="polite">Carregando com calma...</p>;
-
   const formatCurrency = (val: number) => `R$ ${val.toFixed(2).replace('.', ',')}`;
 
+  if (loading) {
+    return (
+      <div className="w-full max-w-md mx-auto px-4 pb-40 space-y-6" aria-label="Carregando painel">
+        <div className="space-y-5">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-28 rounded-3xl bg-success/30 animate-skeleton" />
+          ))}
+        </div>
+        <div className="h-40 rounded-3xl bg-calm/20 animate-skeleton" />
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full max-w-md mx-auto px-4 pb-32 space-y-8" aria-label="Painel financeiro">
-      <section className="grid gap-4" aria-label="Resumo do mês">
-        <div className="p-5 rounded-2xl bg-success flex items-center justify-between shadow-sm" aria-label="Dinheiro que entrou este mês">
+    <div className="w-full max-w-md mx-auto px-4 pb-40 space-y-6" aria-label="Painel financeiro">
+      <section className="grid gap-5" aria-label="Resumo do mês">
+        <div className="p-6 rounded-3xl bg-success flex items-center justify-between shadow-sm" aria-label="Dinheiro que entrou este mês">
           <div>
-            <p className="text-sm font-medium text-text/70 mb-1">O que entrou este mês</p>
-            <p className="text-2xl font-bold text-text">{formatCurrency(summary.income)}</p>
+            <p className="text-base font-medium text-[#333333]/80 mb-1">O que entrou este mês</p>
+            <p className="text-3xl font-bold text-[#333333]">{formatCurrency(summary.income)}</p>
           </div>
-          <ArrowUp size={28} strokeWidth={1.5} className="text-text/60" aria-hidden="true" />
+          <ArrowUp size={32} strokeWidth={2} className="text-[#333333]/70" aria-hidden="true" />
         </div>
-        
-        <div className="p-5 rounded-2xl bg-alert flex items-center justify-between shadow-sm" aria-label="Dinheiro que saiu este mês">
+
+        <div className="p-6 rounded-3xl bg-alert flex items-center justify-between shadow-sm" aria-label="Dinheiro que saiu este mês">
           <div>
-            <p className="text-sm font-medium text-text/70 mb-1">O que saiu este mês</p>
-            <p className="text-2xl font-bold text-text">{formatCurrency(summary.expense)}</p>
+            <p className="text-base font-medium text-[#333333]/80 mb-1">O que saiu este mês</p>
+            <p className="text-3xl font-bold text-[#333333]">{formatCurrency(summary.expense)}</p>
           </div>
-          <ArrowDown size={28} strokeWidth={1.5} className="text-text/60" aria-hidden="true" />
+          <ArrowDown size={32} strokeWidth={2} className="text-[#333333]/70" aria-hidden="true" />
         </div>
-        
-        <div className="p-5 rounded-2xl bg-calm flex items-center justify-between shadow-sm" aria-label="Saldo restante para você">
+
+        <div className="p-6 rounded-3xl bg-calm flex items-center justify-between shadow-sm" aria-label="Saldo restante para você">
           <div>
-            <p className="text-sm font-medium text-text/70 mb-1">O que sobrou para você</p>
-            <p className="text-2xl font-bold text-text">{formatCurrency(summary.balance)}</p>
+            <p className="text-base font-medium text-[#333333]/80 mb-1">O que sobrou para você</p>
+            <p className="text-3xl font-bold text-[#333333]">{formatCurrency(summary.balance)}</p>
           </div>
-          <Star size={28} strokeWidth={1.5} className="text-text/60" aria-hidden="true" />
+          <Star size={36} strokeWidth={1.5} fill="#333333" className="text-[#333333]/80" aria-hidden="true" />
         </div>
       </section>
 
       <section aria-label="Últimas movimentações">
-        <h2 className="text-lg font-semibold text-text mb-3 px-1">Últimas movimentações</h2>
+        <h2 className="text-lg font-semibold text-text mb-4 px-1">Últimas movimentações</h2>
         {recent.length > 0 ? (
           <ul className="space-y-3">
             {recent.map((t) => (
-              <li 
-                key={t.id} 
-                className="p-4 rounded-xl bg-bg border border-calm/30 flex items-center justify-between hover:bg-calm/10 transition cursor-pointer focus-within:ring-2 focus-within:ring-calm" 
-                tabIndex={0} 
-                role="button" 
+              <li
+                key={t.id}
+                className="p-4 rounded-2xl bg-[#3A3A3A] border border-calm/20 flex items-center justify-between hover:bg-[#404040] transition cursor-pointer focus-within:ring-2 focus-within:ring-calm"
+                tabIndex={0}
+                role="button"
                 aria-label={`Transação: ${t.description}, valor ${formatCurrency(t.amount)}`}
               >
                 <div className="flex items-center gap-3">
-                  <div className={`w-2 h-2 rounded-full ${t.type === 'income' ? 'bg-success' : 'bg-alert'}`} aria-hidden="true" />
+                  <div className={`w-2.5 h-2.5 rounded-full ${t.type === 'income' ? 'bg-success' : 'bg-alert'}`} aria-hidden="true" />
                   <span className="text-text font-medium">{t.description}</span>
                 </div>
-                <span className={`font-semibold ${t.type === 'income' ? 'text-text' : 'text-text/80'}`}>
+                <span className={`font-semibold ${t.type === 'income' ? 'text-success' : 'text-alert'}`}>
                   {t.type === 'income' ? '+' : '-'} {formatCurrency(t.amount)}
                 </span>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="text-text/50 text-center py-6">Nenhuma movimentação ainda. Toque no microfone para começar!</p>
+          <div className="p-8 rounded-3xl bg-[#3A3A3A] border border-calm/10 flex flex-col items-center justify-center text-center">
+            <Clock size={28} strokeWidth={1.5} className="text-calm/60 mb-3" aria-hidden="true" />
+            <p className="text-text/60">Nenhuma movimentação ainda.<br/>Toque no microfone para começar!</p>
+          </div>
         )}
       </section>
     </div>

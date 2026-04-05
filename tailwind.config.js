@@ -4,8 +4,8 @@ export default {
   theme: {
     extend: {
       colors: {
-        bg: '#FEFDF5',
-        text: '#333333',
+        bg: '#333333',
+        text: '#FEFDF5',
         success: '#AEEFD0',
         calm: '#AED9E0',
         alert: '#FFB347',
