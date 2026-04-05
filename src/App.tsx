@@ -130,7 +130,10 @@ export default function App() {
   return (
     <main className="min-h-screen bg-bg text-text font-sans flex flex-col" aria-label="Tela principal do Planejaí">
       <header className="p-6 pb-2 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-text">Planejaí</h1>
+        <div className="flex items-center">
+          <img src="/favicon.png" alt="Logo Planejaí" className="w-10 h-10 mr-3" />
+          <h1 className="text-2xl font-bold text-text">Planejaí</h1>
+        </div>
         <button
           onClick={() => setIsInsightsOpen(true)}
           className="p-2 rounded-full hover:bg-calm/20 transition focus:outline-none focus:ring-2 focus:ring-calm"
