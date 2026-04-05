@@ -6,7 +6,7 @@ import { ManualEntryDrawer } from './components/ManualEntryDrawer';
 import { VoiceConfirmationDrawer } from './components/VoiceConfirmationDrawer';
 import { BrowserWarningModal } from './components/BrowserWarningModal';
 import { InsightsDrawer } from './components/InsightsDrawer';
-import { Mic, MicOff, Check, Plus, BarChart } from 'lucide-react';
+import { Mic, MicOff, Check, Plus } from 'lucide-react';
 
 type ExtractedData = {
   type: 'income' | 'expense';
@@ -129,22 +129,8 @@ export default function App() {
 
   return (
     <main className="min-h-screen bg-bg text-text font-sans flex flex-col" aria-label="Tela principal do Planejaí">
-      <header className="p-6 pb-2 flex items-center justify-between">
-        <div className="flex items-center">
-          <img src="/favicon.png" alt="Logo Planejaí" className="w-10 h-10 mr-3" />
-          <h1 className="text-2xl font-bold text-text">Planejaí</h1>
-        </div>
-        <button
-          onClick={() => setIsInsightsOpen(true)}
-          className="p-2 rounded-full hover:bg-calm/20 transition focus:outline-none focus:ring-2 focus:ring-calm"
-          aria-label="Abrir meus gráficos"
-        >
-          <BarChart size={24} strokeWidth={1.5} className="text-text" />
-        </button>
-      </header>
-
       <div className="flex-1 overflow-y-auto">
-        <Dashboard onEdit={handleEdit} />
+        <Dashboard onEdit={handleEdit} onOpenInsights={() => setIsInsightsOpen(true)} />
       </div>
 
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-4 z-40">

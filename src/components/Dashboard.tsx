@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { ArrowUp, ArrowDown, Star, Clock } from 'lucide-react';
+import { ArrowUp, ArrowDown, Star, Clock, BarChart } from 'lucide-react';
 import { db, Transaction } from '../db';
 
 const COLORS = {
@@ -10,9 +10,10 @@ const COLORS = {
 
 interface DashboardProps {
   onEdit: (transaction: Transaction) => void;
+  onOpenInsights: () => void;
 }
 
-export function Dashboard({ onEdit }: DashboardProps) {
+export function Dashboard({ onEdit, onOpenInsights }: DashboardProps) {
   const transactions = useLiveQuery(() => db.transactions.orderBy('timestamp').reverse().toArray());
 
   const isLoading = transactions === undefined;
@@ -40,6 +41,18 @@ export function Dashboard({ onEdit }: DashboardProps) {
 
   return (
     <div className="w-full max-w-md mx-auto px-4 pb-40 space-y-6" aria-label="Painel financeiro">
+      <div className="flex justify-between items-center mb-10">
+        <div className="w-10" aria-hidden="true" />
+        <img src="/favicon.png" alt="Logo Planejaí" className="w-16 h-16" />
+        <button
+          onClick={onOpenInsights}
+          className="p-2 rounded-full hover:bg-calm/20 transition focus:outline-none focus:ring-2 focus:ring-calm"
+          aria-label="Abrir meus gráficos"
+        >
+          <BarChart size={24} strokeWidth={1.5} className="text-text" />
+        </button>
+      </div>
+
       <section className="grid gap-5" aria-label="Resumo do mês">
         {/* Card Verde - Entradas */}
         <div className="p-6 rounded-3xl bg-success flex items-center justify-between shadow-sm" aria-label="Dinheiro que entrou este mês">
