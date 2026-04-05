@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { db, Transaction } from './db';
 import { Dashboard } from './components/Dashboard';
 import { TranslatorDrawer } from './components/TranslatorDrawer';
@@ -27,6 +27,9 @@ export default function App() {
   const [isInsightsOpen, setIsInsightsOpen] = useState(false);
   const [isTranslatorOpen, setIsTranslatorOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [isWaiting, setIsWaiting] = useState(false);
+  
+  const errorCountRef = useRef(0);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -48,6 +51,7 @@ export default function App() {
 
     recognition.onstart = () => {
       setIsListening(true);
+      setIsWaiting(false);
     };
 
     recognition.onresult = async (event: any) => {
@@ -57,6 +61,7 @@ export default function App() {
       if (current.isFinal) {
         setIsListening(false);
         setIsLoading(true);
+        errorCountRef.current = 0;
         
         const cleanedTranscript = transcript.toLowerCase().replace(/\.$/, '').trim();
 
@@ -93,20 +98,42 @@ export default function App() {
 
     recognition.onerror = (event: any) => {
       console.error('Erro no reconhecimento de voz:', event.error);
-      setIsListening(false);
-      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+      if (event.error === 'no-speech') {
+        errorCountRef.current += 1;
+        if (errorCountRef.current < 3) {
+          setIsWaiting(true);
+          setTimeout(() => {
+            try { recognition.start(); } catch (e) {}
+          }, 1000);
+        } else {
+          setIsListening(false);
+          setIsWaiting(false);
+          errorCountRef.current = 0;
+          showToast('Não consegui ouvir nada. Tente falar mais perto do microfone.');
+        }
+      } else if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        setIsListening(false);
+        errorCountRef.current = 0;
         showToast('Permissão de microfone negada. Verifique as configurações.');
       } else {
+        setIsListening(false);
+        errorCountRef.current = 0;
         showToast('O barulho do mundo me atrapalhou um pouco. Pode repetir com calma?');
       }
     };
 
     recognition.onend = () => {
-      setIsListening(false);
+      if (!isWaiting) {
+        setIsListening(false);
+      }
     };
 
-    recognition.start();
-  }, []);
+    try {
+      recognition.start();
+    } catch (e) {
+      console.error('Falha ao iniciar reconhecimento:', e);
+    }
+  }, [isWaiting]);
 
   const handleVoiceConfirm = async () => {
     if (!extractedData) return;
@@ -164,8 +191,11 @@ export default function App() {
       </div>
 
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-40">
-        {isListening && (
+        {isListening && !isWaiting && (
           <span className="text-sm font-medium text-alert animate-pulse">Estou ouvindo...</span>
+        )}
+        {isWaiting && (
+          <span className="text-sm font-medium text-calm animate-pulse">Aguardando sua voz...</span>
         )}
         <div className="flex items-center gap-4">
           <button
