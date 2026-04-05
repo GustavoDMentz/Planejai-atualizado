@@ -7,6 +7,7 @@ import { VoiceConfirmationDrawer } from './components/VoiceConfirmationDrawer';
 import { BrowserWarningModal } from './components/BrowserWarningModal';
 import { InsightsDrawer } from './components/InsightsDrawer';
 import { Mic, MicOff, Check, Plus } from 'lucide-react';
+import { extractTransactionFromAudio } from './lib/gemini';
 
 type ExtractedData = {
   type: 'income' | 'expense';
@@ -51,28 +52,14 @@ export default function App() {
   const sendToGemini = async (base64Audio: string) => {
     setIsLoading(true);
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      if (!apiKey) throw new Error('API Key não configurada');
-
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{
-            parts: [
-              { text: "Transcreva este áudio e extraia a transação financeira no formato JSON: { type: 'income'|'expense', amount: number, description: string, category: string }. Retorne APENAS JSON puro." },
-              { inline_data: { mime_type: "audio/webm", data: base64Audio } }
-            ]
-          }]
-        })
+      const result = await extractTransactionFromAudio(base64Audio);
+      
+      setExtractedData({
+        type: result.tipo === 'entrada' ? 'income' : 'expense',
+        amount: result.valor,
+        description: result.descricao,
+        category: result.categoria
       });
-
-      const data = await response.json();
-      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      const cleanedJson = rawText.replace(/```json|```/g, '').trim();
-      const parsed = JSON.parse(cleanedJson) as ExtractedData;
-
-      setExtractedData(parsed);
       setShowVoiceConfirmation(true);
     } catch {
       showToast('O barulho do mundo me atrapalhou um pouco. Pode repetir com calma?');
@@ -114,7 +101,6 @@ export default function App() {
       mediaRecorder.start();
       setIsRecording(true);
 
-      // Auto-stop after 5 seconds
       setTimeout(() => {
         if (mediaRecorderRef.current?.state === 'recording') {
           mediaRecorderRef.current.stop();
