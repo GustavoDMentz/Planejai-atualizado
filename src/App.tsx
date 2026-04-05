@@ -4,6 +4,7 @@ import { Dashboard } from './components/Dashboard';
 import { TranslatorDrawer } from './components/TranslatorDrawer';
 import { ManualEntryDrawer } from './components/ManualEntryDrawer';
 import { VoiceConfirmationDrawer } from './components/VoiceConfirmationDrawer';
+import { BrowserWarningToast } from './components/BrowserWarningToast';
 import { Mic, MicOff, Check, Plus } from 'lucide-react';
 
 type ExtractedData = {
@@ -17,16 +18,16 @@ export default function App() {
   const [isListening, setIsListening] = useState(false);
   const [extractedData, setExtractedData] = useState<ExtractedData | null>(null);
   const [showVoiceConfirmation, setShowVoiceConfirmation] = useState(false);
-  const [statusMessage, setStatusMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isManualOpen, setIsManualOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [showBrowserWarning, setShowBrowserWarning] = useState(false);
 
   const startListening = useCallback(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      setStatusMessage('Seu navegador não suporta reconhecimento de voz. Tente o Chrome.');
+      setShowBrowserWarning(true);
       return;
     }
 
@@ -37,14 +38,12 @@ export default function App() {
 
     recognition.onstart = () => {
       setIsListening(true);
-      setStatusMessage('Estou ouvindo...');
     };
 
     recognition.onresult = async (event: any) => {
       const transcript = event.results[0][0].transcript;
       setIsListening(false);
       setIsLoading(true);
-      setStatusMessage('');
 
       try {
         const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
@@ -70,7 +69,7 @@ export default function App() {
         setExtractedData(parsed);
         setShowVoiceConfirmation(true);
       } catch {
-        setStatusMessage('O barulho do mundo me atrapalhou um pouco. Pode repetir com calma?');
+        setShowBrowserWarning(true);
       } finally {
         setIsLoading(false);
       }
@@ -78,7 +77,7 @@ export default function App() {
 
     recognition.onerror = () => {
       setIsListening(false);
-      setStatusMessage('O barulho do mundo me atrapalhou um pouco. Pode repetir com calma?');
+      setShowBrowserWarning(true);
     };
 
     recognition.start();
@@ -96,10 +95,9 @@ export default function App() {
       setShowSuccess(true);
       setTimeout(() => {
         setShowSuccess(false);
-        setStatusMessage('');
       }, 2500);
     } catch {
-      setStatusMessage('O barulho do mundo me atrapalhou um pouco. Pode repetir com calma?');
+      setShowBrowserWarning(true);
     }
   };
 
@@ -130,9 +128,6 @@ export default function App() {
     <main className="min-h-screen bg-bg text-text font-sans flex flex-col" aria-label="Tela principal do Planejaí">
       <header className="p-6 pb-2">
         <h1 className="text-2xl font-bold text-text">Planejaí</h1>
-        {statusMessage && !isLoading && (
-          <p className="mt-2 text-sm text-text/70 min-h-[1.25rem]" role="status" aria-live="polite">{statusMessage}</p>
-        )}
       </header>
 
       <div className="flex-1 overflow-y-auto">
@@ -181,6 +176,8 @@ export default function App() {
         onConfirm={handleVoiceConfirm}
         onEdit={handleVoiceEdit}
       />
+
+      <BrowserWarningToast open={showBrowserWarning} onClose={() => setShowBrowserWarning(false)} />
 
       {showSuccess && (
         <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none" aria-live="polite">
