@@ -1,0 +1,21 @@
+@import '@fontsource/lexend/400.css';
+@import '@fontsource/lexend/500.css';
+@import '@fontsource/lexend/600.css';
+@import '@fontsource/lexend/700.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-color: #FEFDF5;
+  color: #333333;
+  font-family: 'Lexend', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button:focus-visible {
+  outline: 3px solid #AED9E0;
+  outline-offset: 2px;
+}
