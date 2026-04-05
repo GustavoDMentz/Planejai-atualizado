@@ -16,7 +16,6 @@ type ExtractedData = {
 };
 
 export default function App() {
-  const [isListening, setIsListening] = useState(false);
   const [extractedData, setExtractedData] = useState<ExtractedData | null>(null);
   const [showVoiceConfirmation, setShowVoiceConfirmation] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -27,105 +26,104 @@ export default function App() {
   const [isInsightsOpen, setIsInsightsOpen] = useState(false);
   const [isTranslatorOpen, setIsTranslatorOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
   
-  const errorCountRef = useRef(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(''), 3000);
   };
 
-  const startListening = useCallback(() => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
+  const blobToBase64 = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = (reader.result as string).split(',')[1];
+        resolve(base64String);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  };
+
+  const sendToGemini = async (base64Audio: string) => {
+    setIsLoading(true);
+    try {
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      if (!apiKey) throw new Error('API Key não configurada');
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { text: "Transcreva este áudio e extraia a transação financeira no formato JSON: { type: 'income'|'expense', amount: number, description: string, category: string }. Retorne APENAS JSON puro." },
+              { inline_data: { mime_type: "audio/webm", data: base64Audio } }
+            ]
+          }]
+        })
+      });
+
+      const data = await response.json();
+      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      const cleanedJson = rawText.replace(/```json|```/g, '').trim();
+      const parsed = JSON.parse(cleanedJson) as ExtractedData;
+
+      setExtractedData(parsed);
+      setShowVoiceConfirmation(true);
+    } catch {
+      showToast('O barulho do mundo me atrapalhou um pouco. Pode repetir com calma?');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const startRecording = useCallback(async () => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       setShowBrowserWarning(true);
       return;
     }
 
-    errorCountRef.current = 0;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      chunksRef.current = [];
 
-    // Delay de 300ms para evitar ruído de clique/toque
-    setTimeout(() => {
-      const recognition = new SpeechRecognition();
-      recognition.lang = 'pt-BR';
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
-      recognition.continuous = false;
-
-      recognition.onstart = () => {
-        setIsListening(true);
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
       };
 
-      recognition.onresult = async (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        setIsListening(false);
-        setIsLoading(true);
-        errorCountRef.current = 0;
+      mediaRecorder.onstop = async () => {
+        setIsRecording(false);
+        stream.getTracks().forEach(track => track.stop());
         
-        const cleanedTranscript = transcript.toLowerCase().replace(/\.$/, '').trim();
-
-        try {
-          const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-          if (!apiKey) throw new Error('API Key não configurada');
-
-          const systemPrompt = `Você é o assistente financeiro do Planejaí. Extraia dados de frases informais. Se o usuário disser 'Recebi 2k do job de ontem', você deve retornar { "type": "income", "amount": 2000, "description": "Job de ontem", "category": "Serviços" }. Se ele disser 'Paguei o agiota 50 conto', retorne { "type": "expense", "amount": 50, "description": "Pagamento de dívida", "category": "Outros" }. Retorne APENAS JSON puro.`;
-
-          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{
-                parts: [{ text: `${systemPrompt}\n\nFrase do usuário: "${cleanedTranscript}"` }]
-              }]
-            })
-          });
-
-          const data = await response.json();
-          const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-          const cleanedJson = rawText.replace(/```json|```/g, '').trim();
-          const parsed = JSON.parse(cleanedJson) as ExtractedData;
-
-          setExtractedData(parsed);
-          setShowVoiceConfirmation(true);
-        } catch {
-          showToast('O barulho do mundo me atrapalhou um pouco. Pode repetir com calma?');
-        } finally {
-          setIsLoading(false);
+        if (chunksRef.current.length === 0) {
+          showToast('Nenhum áudio capturado. Tente novamente.');
+          return;
         }
+
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        const base64 = await blobToBase64(blob);
+        await sendToGemini(base64);
       };
 
-      recognition.onerror = (event: any) => {
-        console.error('Erro no reconhecimento de voz:', event.error);
-        if (event.error === 'no-speech' || event.error === 'audio-capture') {
-          // Tratamento silencioso
-          setIsListening(false);
-        } else if (event.error === 'network') {
-          setIsListening(false);
-          showToast('Conexão instável. Verifique sua internet.');
-        } else {
-          setIsListening(false);
-          errorCountRef.current += 1;
-          if (errorCountRef.current >= 2) {
-            showToast('A voz não está cooperando. Vamos digitar?');
-            setIsManualOpen(true);
-            errorCountRef.current = 0;
-          } else {
-            showToast('O barulho do mundo me atrapalhou um pouco. Pode repetir com calma?');
-          }
+      mediaRecorder.start();
+      setIsRecording(true);
+
+      // Auto-stop after 5 seconds
+      setTimeout(() => {
+        if (mediaRecorderRef.current?.state === 'recording') {
+          mediaRecorderRef.current.stop();
         }
-      };
-
-      recognition.onend = () => {
-        setIsListening(false);
-      };
-
-      try {
-        recognition.start();
-      } catch (e) {
-        console.error('Falha ao iniciar reconhecimento:', e);
-        setIsListening(false);
-      }
-    }, 300);
+      }, 5000);
+    } catch (err) {
+      console.error('Erro ao acessar microfone:', err);
+      showToast('Não consegui acessar o microfone. Verifique as permissões.');
+    }
   }, []);
 
   const handleVoiceConfirm = async () => {
@@ -184,8 +182,8 @@ export default function App() {
       </div>
 
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-40">
-        {isListening && (
-          <span className="text-sm font-medium text-alert animate-pulse">Estou ouvindo...</span>
+        {isRecording && (
+          <span className="text-sm font-medium text-alert animate-pulse">Gravando áudio...</span>
         )}
         <div className="flex items-center gap-4">
           <button
@@ -197,14 +195,14 @@ export default function App() {
           </button>
           {!showVoiceConfirmation && (
             <button
-              onClick={startListening}
-              disabled={isListening || isLoading}
+              onClick={startRecording}
+              disabled={isRecording || isLoading}
               className={`w-16 h-16 rounded-full flex items-center justify-center shadow-xl transition-all focus:outline-none focus:ring-4 focus:ring-calm ${
-                isListening ? 'bg-alert animate-pulse' : 'bg-success hover:opacity-90'
+                isRecording ? 'bg-alert animate-pulse' : 'bg-success hover:opacity-90'
               }`}
-              aria-label={isListening ? 'Ouvindo sua voz' : 'Clique para falar'}
+              aria-label={isRecording ? 'Gravando sua voz' : 'Clique para gravar'}
             >
-              {isListening ? <MicOff size={24} strokeWidth={2} className="text-[#333333]" /> : <Mic size={24} strokeWidth={2} className="text-[#333333]" />}
+              {isRecording ? <MicOff size={24} strokeWidth={2} className="text-[#333333]" /> : <Mic size={24} strokeWidth={2} className="text-[#333333]" />}
             </button>
           )}
         </div>
