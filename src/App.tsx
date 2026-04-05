@@ -26,6 +26,12 @@ export default function App() {
   const [showBrowserWarning, setShowBrowserWarning] = useState(false);
   const [isInsightsOpen, setIsInsightsOpen] = useState(false);
   const [isTranslatorOpen, setIsTranslatorOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(''), 3000);
+  };
 
   const startListening = useCallback(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -36,7 +42,8 @@ export default function App() {
 
     const recognition = new SpeechRecognition();
     recognition.lang = 'pt-BR';
-    recognition.interimResults = false;
+    recognition.interimResults = true;
+    recognition.continuous = false;
     recognition.maxAlternatives = 1;
 
     recognition.onstart = () => {
@@ -44,43 +51,58 @@ export default function App() {
     };
 
     recognition.onresult = async (event: any) => {
-      const transcript = event.results[0][0].transcript;
-      setIsListening(false);
-      setIsLoading(true);
+      const current = event.results[event.results.length - 1];
+      const transcript = current[0].transcript;
 
-      try {
-        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-        if (!apiKey) throw new Error('API Key não configurada');
+      if (current.isFinal) {
+        setIsListening(false);
+        setIsLoading(true);
+        
+        const cleanedTranscript = transcript.toLowerCase().replace(/\.$/, '').trim();
 
-        const systemPrompt = `Você é o assistente financeiro do Planejaí. Extraia dados de frases informais. Se o usuário disser 'Recebi 2k do job de ontem', você deve retornar { "type": "income", "amount": 2000, "description": "Job de ontem", "category": "Serviços" }. Se ele disser 'Paguei o agiota 50 conto', retorne { "type": "expense", "amount": 50, "description": "Pagamento de dívida", "category": "Outros" }. Retorne APENAS JSON puro.`;
+        try {
+          const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+          if (!apiKey) throw new Error('API Key não configurada');
 
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{ text: `${systemPrompt}\n\nFrase do usuário: "${transcript}"` }]
-            }]
-          })
-        });
+          const systemPrompt = `Você é o assistente financeiro do Planejaí. Extraia dados de frases informais. Se o usuário disser 'Recebi 2k do job de ontem', você deve retornar { "type": "income", "amount": 2000, "description": "Job de ontem", "category": "Serviços" }. Se ele disser 'Paguei o agiota 50 conto', retorne { "type": "expense", "amount": 50, "description": "Pagamento de dívida", "category": "Outros" }. Retorne APENAS JSON puro.`;
 
-        const data = await response.json();
-        const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-        const cleanedJson = rawText.replace(/```json|```/g, '').trim();
-        const parsed = JSON.parse(cleanedJson) as ExtractedData;
+          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{
+                parts: [{ text: `${systemPrompt}\n\nFrase do usuário: "${cleanedTranscript}"` }]
+              }]
+            })
+          });
 
-        setExtractedData(parsed);
-        setShowVoiceConfirmation(true);
-      } catch {
-        setShowBrowserWarning(true);
-      } finally {
-        setIsLoading(false);
+          const data = await response.json();
+          const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          const cleanedJson = rawText.replace(/```json|```/g, '').trim();
+          const parsed = JSON.parse(cleanedJson) as ExtractedData;
+
+          setExtractedData(parsed);
+          setShowVoiceConfirmation(true);
+        } catch {
+          showToast('O barulho do mundo me atrapalhou um pouco. Pode repetir com calma?');
+        } finally {
+          setIsLoading(false);
+        }
       }
     };
 
-    recognition.onerror = () => {
+    recognition.onerror = (event: any) => {
+      console.error('Erro no reconhecimento de voz:', event.error);
       setIsListening(false);
-      setShowBrowserWarning(true);
+      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        showToast('Permissão de microfone negada. Verifique as configurações.');
+      } else {
+        showToast('O barulho do mundo me atrapalhou um pouco. Pode repetir com calma?');
+      }
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
     };
 
     recognition.start();
@@ -100,7 +122,7 @@ export default function App() {
         setShowSuccess(false);
       }, 2500);
     } catch {
-      setShowBrowserWarning(true);
+      showToast('O barulho do mundo me atrapalhou um pouco. Pode repetir com calma?');
     }
   };
 
@@ -129,30 +151,43 @@ export default function App() {
 
   return (
     <main className="min-h-screen bg-bg text-text font-sans flex flex-col" aria-label="Tela principal do Planejaí">
+      {toastMessage && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4 animate-contentShow">
+          <div className="p-4 rounded-2xl bg-alert/20 border border-alert/40 backdrop-blur-md shadow-lg text-center">
+            <p className="text-sm font-medium text-text">{toastMessage}</p>
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 overflow-y-auto">
         <Dashboard onEdit={handleEdit} onOpenInsights={() => setIsInsightsOpen(true)} />
       </div>
 
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-4 z-40">
-        <button
-          onClick={() => setIsManualOpen(true)}
-          className="w-14 h-14 rounded-full bg-calm flex items-center justify-center shadow-lg hover:bg-calm/80 transition focus:outline-none focus:ring-4 focus:ring-calm"
-          aria-label="Adicionar transação manualmente"
-        >
-          <Plus size={24} strokeWidth={2} className="text-[#333333]" />
-        </button>
-        {!showVoiceConfirmation && (
-          <button
-            onClick={startListening}
-            disabled={isListening || isLoading}
-            className={`w-16 h-16 rounded-full flex items-center justify-center shadow-xl transition-all focus:outline-none focus:ring-4 focus:ring-calm ${
-              isListening ? 'bg-alert animate-pulse' : 'bg-success hover:opacity-90'
-            }`}
-            aria-label={isListening ? 'Ouvindo sua voz' : 'Clique para falar'}
-          >
-            {isListening ? <MicOff size={24} strokeWidth={2} className="text-[#333333]" /> : <Mic size={24} strokeWidth={2} className="text-[#333333]" />}
-          </button>
+      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-40">
+        {isListening && (
+          <span className="text-sm font-medium text-alert animate-pulse">Estou ouvindo...</span>
         )}
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setIsManualOpen(true)}
+            className="w-14 h-14 rounded-full bg-calm flex items-center justify-center shadow-lg hover:bg-calm/80 transition focus:outline-none focus:ring-4 focus:ring-calm"
+            aria-label="Adicionar transação manualmente"
+          >
+            <Plus size={24} strokeWidth={2} className="text-[#333333]" />
+          </button>
+          {!showVoiceConfirmation && (
+            <button
+              onClick={startListening}
+              disabled={isListening || isLoading}
+              className={`w-16 h-16 rounded-full flex items-center justify-center shadow-xl transition-all focus:outline-none focus:ring-4 focus:ring-calm ${
+                isListening ? 'bg-alert animate-pulse' : 'bg-success hover:opacity-90'
+              }`}
+              aria-label={isListening ? 'Ouvindo sua voz' : 'Clique para falar'}
+            >
+              {isListening ? <MicOff size={24} strokeWidth={2} className="text-[#333333]" /> : <Mic size={24} strokeWidth={2} className="text-[#333333]" />}
+            </button>
+          )}
+        </div>
       </div>
 
       <TranslatorDrawer open={isTranslatorOpen} onOpenChange={setIsTranslatorOpen} />
