@@ -4,7 +4,7 @@ import { Dashboard } from './components/Dashboard';
 import { TranslatorDrawer } from './components/TranslatorDrawer';
 import { ManualEntryDrawer } from './components/ManualEntryDrawer';
 import { VoiceConfirmationDrawer } from './components/VoiceConfirmationDrawer';
-import { BrowserWarningToast } from './components/BrowserWarningToast';
+import { BrowserWarningModal } from './components/BrowserWarningModal';
 import { Mic, MicOff, Check, Plus } from 'lucide-react';
 
 type ExtractedData = {
@@ -177,7 +177,11 @@ export default function App() {
         onEdit={handleVoiceEdit}
       />
 
-      <BrowserWarningToast open={showBrowserWarning} onClose={() => setShowBrowserWarning(false)} />
+      <BrowserWarningModal 
+        open={showBrowserWarning} 
+        onClose={() => setShowBrowserWarning(false)} 
+        onOpenManual={() => setIsManualOpen(true)} 
+      />
 
       {showSuccess && (
         <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none" aria-live="polite">
