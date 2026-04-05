@@ -2,6 +2,12 @@ import { useEffect, useState } from 'react';
 import { ArrowUp, ArrowDown, Star, Clock } from 'lucide-react';
 import { getMonthlySummary, getRecentTransactions, Transaction } from '../db';
 
+const COLORS = {
+  green: '#0F2A1A',
+  orange: '#2D1600',
+  blue: '#00212C',
+};
+
 export function Dashboard() {
   const [summary, setSummary] = useState({ income: 0, expense: 0, balance: 0 });
   const [recent, setRecent] = useState<Transaction[]>([]);
@@ -38,28 +44,28 @@ export function Dashboard() {
         {/* Card Verde - Entradas */}
         <div className="p-6 rounded-3xl bg-success flex items-center justify-between shadow-sm" aria-label="Dinheiro que entrou este mês">
           <div>
-            <p className="text-base font-medium mb-1" style={{ color: 'rgba(15, 42, 26, 0.8) !important' }}>O que entrou este mês</p>
-            <p className="text-3xl font-bold" style={{ color: '#0F2A1A !important' }}>{formatCurrency(summary.income)}</p>
+            <p className="text-base font-medium mb-1" style={{ color: COLORS.green }}>O que entrou este mês</p>
+            <p className="text-3xl font-bold" style={{ color: COLORS.green }}>{formatCurrency(summary.income)}</p>
           </div>
-          <ArrowUp size={32} strokeWidth={2} style={{ color: 'rgba(15, 42, 26, 0.8) !important' }} aria-hidden="true" />
+          <ArrowUp size={32} strokeWidth={2} style={{ color: COLORS.green }} aria-hidden="true" />
         </div>
 
         {/* Card Laranja - Saídas */}
         <div className="p-6 rounded-3xl bg-alert flex items-center justify-between shadow-sm" aria-label="Dinheiro que saiu este mês">
           <div>
-            <p className="text-base font-medium mb-1" style={{ color: 'rgba(45, 22, 0, 0.8) !important' }}>O que saiu este mês</p>
-            <p className="text-3xl font-bold" style={{ color: '#2D1600 !important' }}>{formatCurrency(summary.expense)}</p>
+            <p className="text-base font-medium mb-1" style={{ color: COLORS.orange }}>O que saiu este mês</p>
+            <p className="text-3xl font-bold" style={{ color: COLORS.orange }}>{formatCurrency(summary.expense)}</p>
           </div>
-          <ArrowDown size={32} strokeWidth={2} style={{ color: 'rgba(45, 22, 0, 0.8) !important' }} aria-hidden="true" />
+          <ArrowDown size={32} strokeWidth={2} style={{ color: COLORS.orange }} aria-hidden="true" />
         </div>
 
         {/* Card Azul - Sobrou */}
         <div className="p-6 rounded-3xl bg-calm flex items-center justify-between shadow-sm" aria-label="Saldo restante para você">
           <div>
-            <p className="text-base font-medium mb-1" style={{ color: 'rgba(0, 33, 44, 0.8) !important' }}>O que sobrou para você</p>
-            <p className="text-3xl font-bold" style={{ color: '#00212C !important' }}>{formatCurrency(summary.balance)}</p>
+            <p className="text-base font-medium mb-1" style={{ color: COLORS.blue }}>O que sobrou para você</p>
+            <p className="text-3xl font-bold" style={{ color: COLORS.blue }}>{formatCurrency(summary.balance)}</p>
           </div>
-          <Star size={36} strokeWidth={1.5} fill="#00212C" style={{ color: 'rgba(0, 33, 44, 0.8) !important' }} aria-hidden="true" />
+          <Star size={36} strokeWidth={1.5} fill={COLORS.blue} style={{ color: COLORS.blue }} aria-hidden="true" />
         </div>
       </section>
 
