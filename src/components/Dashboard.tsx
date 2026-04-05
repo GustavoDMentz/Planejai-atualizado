@@ -41,12 +41,11 @@ export function Dashboard({ onEdit, onOpenInsights }: DashboardProps) {
 
   return (
     <div className="w-full max-w-md mx-auto px-4 pb-40 space-y-6" aria-label="Painel financeiro">
-      <div className="flex justify-between items-center mb-10">
-        <div className="w-10" aria-hidden="true" />
-        <img src="/favicon.png" alt="Logo Planejaí" className="w-16 h-16" />
+      <div className="relative flex justify-center mb-10">
+        <img src="/favicon.png" alt="Logo Planejaí" className="w-16 h-16 mx-auto mb-10" />
         <button
           onClick={onOpenInsights}
-          className="p-2 rounded-full hover:bg-calm/20 transition focus:outline-none focus:ring-2 focus:ring-calm"
+          className="absolute right-0 top-1/2 -translate-y-1/2 p-2 rounded-full hover:bg-calm/20 transition focus:outline-none focus:ring-2 focus:ring-calm"
           aria-label="Abrir meus gráficos"
         >
           <BarChart size={24} strokeWidth={1.5} className="text-text" />
