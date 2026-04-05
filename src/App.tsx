@@ -86,7 +86,7 @@ export default function App() {
     try {
       await db.transactions.add({
         ...extractedData,
-        createdAt: new Date(),
+        timestamp: new Date(),
       } as Transaction);
       setShowConfirmation(false);
       setExtractedData(null);

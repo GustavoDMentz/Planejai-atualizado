@@ -12,6 +12,7 @@
     "@fontsource/lexend": "^5.0.0",
     "@radix-ui/react-dialog": "^1.0.5",
     "dexie": "^4.0.0",
+    "dexie-react-hooks": "^1.1.7",
     "lucide-react": "^0.300.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0"

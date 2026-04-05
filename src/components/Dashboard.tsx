@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { ArrowUp, ArrowDown, Star, Clock } from 'lucide-react';
-import { getMonthlySummary, getRecentTransactions, Transaction } from '../db';
+import { db } from '../db';
 
 const COLORS = {
   green: '#0F2A1A',
@@ -9,23 +9,19 @@ const COLORS = {
 };
 
 export function Dashboard() {
-  const [summary, setSummary] = useState({ income: 0, expense: 0, balance: 0 });
-  const [recent, setRecent] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
+  const transactions = useLiveQuery(() => db.transactions.orderBy('timestamp').reverse().toArray());
 
-  useEffect(() => {
-    async function loadData() {
-      const [sum, rec] = await Promise.all([getMonthlySummary(), getRecentTransactions(3)]);
-      setSummary(sum);
-      setRecent(rec);
-      setLoading(false);
-    }
-    loadData();
-  }, []);
+  const isLoading = transactions === undefined;
+
+  const income = transactions?.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0) || 0;
+  const expense = transactions?.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0) || 0;
+  const balance = income - expense;
+
+  const recent = transactions?.slice(0, 3) || [];
 
   const formatCurrency = (val: number) => `R$ ${val.toFixed(2).replace('.', ',')}`;
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="w-full max-w-md mx-auto px-4 pb-40 space-y-6" aria-label="Carregando painel">
         <div className="space-y-5">
@@ -45,7 +41,7 @@ export function Dashboard() {
         <div className="p-6 rounded-3xl bg-success flex items-center justify-between shadow-sm" aria-label="Dinheiro que entrou este mês">
           <div>
             <p className="text-base font-medium mb-1" style={{ color: COLORS.green }}>O que entrou este mês</p>
-            <p className="text-3xl font-bold" style={{ color: COLORS.green }}>{formatCurrency(summary.income)}</p>
+            <p className="text-3xl font-bold" style={{ color: COLORS.green }}>{formatCurrency(income)}</p>
           </div>
           <ArrowUp size={32} strokeWidth={2} style={{ color: COLORS.green }} aria-hidden="true" />
         </div>
@@ -54,7 +50,7 @@ export function Dashboard() {
         <div className="p-6 rounded-3xl bg-alert flex items-center justify-between shadow-sm" aria-label="Dinheiro que saiu este mês">
           <div>
             <p className="text-base font-medium mb-1" style={{ color: COLORS.orange }}>O que saiu este mês</p>
-            <p className="text-3xl font-bold" style={{ color: COLORS.orange }}>{formatCurrency(summary.expense)}</p>
+            <p className="text-3xl font-bold" style={{ color: COLORS.orange }}>{formatCurrency(expense)}</p>
           </div>
           <ArrowDown size={32} strokeWidth={2} style={{ color: COLORS.orange }} aria-hidden="true" />
         </div>
@@ -63,7 +59,7 @@ export function Dashboard() {
         <div className="p-6 rounded-3xl bg-calm flex items-center justify-between shadow-sm" aria-label="Saldo restante para você">
           <div>
             <p className="text-base font-medium mb-1" style={{ color: COLORS.blue }}>O que sobrou para você</p>
-            <p className="text-3xl font-bold" style={{ color: COLORS.blue }}>{formatCurrency(summary.balance)}</p>
+            <p className="text-3xl font-bold" style={{ color: COLORS.blue }}>{formatCurrency(balance)}</p>
           </div>
           <Star size={36} strokeWidth={1.5} fill={COLORS.blue} style={{ color: COLORS.blue }} aria-hidden="true" />
         </div>
