@@ -35,6 +35,7 @@ export default function App() {
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mimeTypeRef = useRef<string>('audio/webm');
+  const voiceTestTokenRef = useRef<string>('');
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -51,6 +52,12 @@ export default function App() {
       mediaRecorderRef.current?.stop();
       if (timerRef.current) clearTimeout(timerRef.current);
       return;
+    }
+
+    if (!voiceTestTokenRef.current) {
+      const token = window.prompt('Acesso restrito: informe o token temporário de teste do microfone.');
+      if (!token) return;
+      voiceTestTokenRef.current = token;
     }
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -93,7 +100,7 @@ export default function App() {
         reader.onloadend = async () => {
           const base64 = (reader.result as string).split(',')[1];
           try {
-            const result = await extractTransactionFromAudio(base64, mimeTypeRef.current);
+            const result = await extractTransactionFromAudio(base64, mimeTypeRef.current, voiceTestTokenRef.current);
             setExtractedData({
               type: result.tipo === 'entrada' ? 'income' : 'expense',
               amount: result.valor,
