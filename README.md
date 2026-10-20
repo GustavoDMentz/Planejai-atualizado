@@ -13,7 +13,7 @@
 
 </div>
 
-> App de finanças pessoais **mobile-first** com registro de transações por **voz**, processamento por IA (Google Gemini), armazenamento 100% local (IndexedDB via Dexie) e dashboard com análise de gastos — tudo sem backend.
+> App de finanças pessoais **mobile-first** com registro de transações por **voz**, processamento por IA (Google Gemini), armazenamento local das transações (IndexedDB via Dexie) e dashboard com análise de gastos — tudo sem backend.
 
 ---
 
@@ -52,8 +52,8 @@ Fale naturalmente — o Gemini transcreve e extrai automaticamente:
 
 ### 💾 100% Local — Sem Backend
 - Todos os dados ficam no **IndexedDB do próprio navegador** via [Dexie.js](https://dexie.org)
-- Privacidade total: nenhum dado financeiro sai do dispositivo
-- Funciona offline após o primeiro carregamento
+- As transações são armazenadas localmente; a integração de áudio com um serviço externo está temporariamente desabilitada por segurança
+- O uso offline depende de cache prévio e de suporte PWA ainda não implementado
 
 ---
 
@@ -152,7 +152,7 @@ Planejai-atualizado/
 
 | Variável | Descrição | Padrão |
 |----------|-----------|--------|
-| `VITE_GEMINI_API_KEY` | Chave da API do Google Gemini | — (obrigatório) |
+| Chave Gemini | Deve ficar exclusivamente no servidor; nunca use prefixo VITE_ | — |
 | `VITE_GEMINI_MODEL` | Modelo Gemini a usar | `gemini-3.5-flash` |
 
 > ⚠️ Nunca commite o arquivo `.env` — ele já está no `.gitignore`.
