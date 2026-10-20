@@ -18,8 +18,13 @@ export function Dashboard({ onEdit, onOpenInsights }: DashboardProps) {
 
   const isLoading = transactions === undefined;
 
-  const income = transactions?.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0) || 0;
-  const expense = transactions?.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0) || 0;
+  const now = new Date();
+  const monthly = transactions?.filter(t => {
+    const d = new Date(t.timestamp);
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+  });
+  const income = monthly?.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0) || 0;
+  const expense = monthly?.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0) || 0;
   const balance = income - expense;
 
   const recent = transactions?.slice(0, 3) || [];
