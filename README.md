@@ -2,7 +2,7 @@
 
 # 💸 Planejaí
 
-### Controle financeiro pessoal com registro por voz e IA
+### Controle financeiro pessoal com registro manual
 
 [![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://typescriptlang.org)
@@ -13,21 +13,14 @@
 
 </div>
 
-> App de finanças pessoais **mobile-first** com registro de transações por **voz**, processamento por IA (Google Gemini), armazenamento local das transações (IndexedDB via Dexie) e dashboard com análise de gastos — tudo sem backend.
+> App de finanças pessoais **mobile-first** com registro manual de transações, armazenamento local das transações (IndexedDB via Dexie) e dashboard com análise de gastos — tudo sem backend.
 
 ---
 
 ## ✨ Funcionalidades
 
-### 🎙️ Registro por Voz com IA
-Fale naturalmente — o Gemini transcreve e extrai automaticamente:
-- **Valor** da transação
-- **Tipo**: entrada ou saída
-- **Categoria** (Alimentação, Transporte, Salário…)
-- **Descrição** resumida
-
-> *Exemplo: "Gastei trinta reais no mercado hoje"*  
-> → `{ valor: 30.00, tipo: "saida", categoria: "Alimentação", descricao: "Compras no mercado" }`
+### 🎙️ Registro por voz (temporariamente indisponível)
+O envio de áudio e a integração com Gemini foram desativados por segurança. Use a entrada manual.
 
 ### 📊 Dashboard Financeiro
 - Cards de **entradas**, **saídas** e **saldo do mês** em tempo real
@@ -67,7 +60,7 @@ Fale naturalmente — o Gemini transcreve e extrai automaticamente:
 | Componentes UI | Radix UI (Dialog, ToggleGroup) + Lucide Icons |
 | Banco de dados | Dexie.js (IndexedDB) |
 | Gráficos | Recharts |
-| IA | Google Gemini (via API REST, multimodal áudio) |
+| IA | Integração desativada por segurança |
 | PWA | Web App Manifest |
 
 ---
@@ -76,7 +69,6 @@ Fale naturalmente — o Gemini transcreve e extrai automaticamente:
 
 ### Pré-requisitos
 - Node.js 18+
-- Chave da API do Google Gemini (gratuita em [aistudio.google.com](https://aistudio.google.com))
 
 ### Instalação
 
@@ -89,14 +81,8 @@ cd Planejai-atualizado
 npm install
 ```
 
-### Configure as variáveis de ambiente
-
-Crie um arquivo `.env` na raiz do projeto:
-
-```env
-VITE_GEMINI_API_KEY=sua_chave_aqui
-VITE_GEMINI_MODEL=gemini-2.0-flash-exp
-```
+### Variáveis de ambiente
+Nenhuma chave de API é necessária. **Não configure `VITE_GEMINI_API_KEY`: variáveis `VITE_` são públicas no navegador.**
 
 ### Inicie o servidor de desenvolvimento
 
@@ -148,16 +134,9 @@ Planejai-atualizado/
 
 ---
 
-## 🔐 Variáveis de Ambiente
+## 🔐 Segurança e persistência
 
-| Variável | Descrição | Padrão |
-|----------|-----------|--------|
-| Chave Gemini | Deve ficar exclusivamente no servidor; nunca use prefixo VITE_ | — |
-| `VITE_GEMINI_MODEL` | Modelo Gemini a usar | `gemini-3.5-flash` |
-
-> ⚠️ Nunca commite o arquivo `.env` — ele já está no `.gitignore`.
-
----
+Não coloque segredos em variáveis `VITE_`. Os registros ficam no IndexedDB do navegador e podem ser perdidos se o armazenamento local for apagado. Exporte backups regularmente e mantenha os arquivos em local seguro.
 
 ## 📄 Licença
 
