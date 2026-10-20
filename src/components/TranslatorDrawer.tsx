@@ -54,7 +54,7 @@ export function TranslatorDrawer({ open: controlledOpen, onOpenChange }: Transla
     <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
       <Dialog.Trigger asChild>
         <button
-          className="fixed bottom-28 left-1/2 -translate-x-1/2 bg-calm/20 backdrop-blur-md text-text px-5 py-2.5 rounded-full font-medium text-sm shadow-lg flex items-center gap-2 hover:bg-calm/30 transition focus:outline-none focus:ring-2 focus:ring-calm z-30"
+          className="mx-auto my-5 bg-calm/20 text-text px-5 py-3 rounded-full font-medium text-base shadow-lg flex items-center justify-center gap-2 hover:bg-calm/30 transition focus:outline-none focus:ring-2 focus:ring-calm"
           aria-label="Abrir tradutor de palavras contábeis"
         >
           <Search size={16} strokeWidth={1.5} aria-hidden="true" />
