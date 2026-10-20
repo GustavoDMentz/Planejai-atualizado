@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { ArrowUp, ArrowDown, Star, Clock, BarChart } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Wallet, Clock, BarChart3, ChevronRight } from 'lucide-react';
 import { db, Transaction } from '../db';
 
 const COLORS = {
@@ -29,7 +29,7 @@ export function Dashboard({ onEdit, onOpenInsights }: DashboardProps) {
 
   const recent = transactions?.slice(0, 3) || [];
 
-  const formatCurrency = (val: number) => `R$ ${val.toFixed(2).replace('.', ',')}`;
+  const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
   if (isLoading) {
     return (
@@ -44,76 +44,79 @@ export function Dashboard({ onEdit, onOpenInsights }: DashboardProps) {
     );
   }
 
+  const monthLabel = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(now);
+
   return (
-    <div className="w-full max-w-md mx-auto px-4 pb-40 space-y-6" aria-label="Painel financeiro">
-      <div className="relative flex items-center justify-center mt-4 mb-6">
-        <h1 className="text-2xl font-bold text-center text-white mt-4 mb-6">Planejaí</h1>
-        <button
-          onClick={onOpenInsights}
-          className="absolute right-0 p-2 rounded-full hover:bg-calm/20 transition focus:outline-none focus:ring-2 focus:ring-calm"
-          aria-label="Abrir meus gráficos"
-        >
-          <BarChart size={24} strokeWidth={1.5} className="text-text" />
+    <div className="w-full max-w-lg mx-auto px-4 pt-6 pb-10 space-y-7" aria-label="Painel financeiro">
+      <header className="flex items-center justify-between gap-4">
+        <div>
+          <p className="text-xs uppercase tracking-[0.18em] text-calm/80 font-semibold">Suas finanças, sem complicação</p>
+          <h1 className="text-3xl font-bold text-text mt-1">Planejaí<span className="text-success">.</span></h1>
+        </div>
+        <button type="button" onClick={onOpenInsights} className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-[#414141] border border-calm/20 text-text text-sm font-semibold hover:border-calm/60 transition focus-visible:ring-2 focus-visible:ring-calm" aria-label="Abrir meus gráficos">
+          <BarChart3 size={19} aria-hidden="true" /> Gráficos
         </button>
-      </div>
+      </header>
 
-      <section className="grid gap-5" aria-label="Resumo do mês">
-        {/* Card Verde - Entradas */}
-        <div className="p-6 rounded-3xl bg-success flex items-center justify-between shadow-sm" aria-label="Dinheiro que entrou este mês">
-          <div>
-            <p className="text-base font-medium mb-1" style={{ color: COLORS.green }}>O que entrou este mês</p>
-            <p className="text-3xl font-bold" style={{ color: COLORS.green }}>{formatCurrency(income)}</p>
+      <section aria-label="Resumo do mês" className="space-y-3">
+        <div className="rounded-3xl bg-calm p-6 shadow-lg shadow-black/10">
+          <div className="flex items-center justify-between gap-3 mb-5">
+            <p className="text-sm font-semibold" style={{ color: COLORS.blue }}>Saldo do mês</p>
+            <Wallet size={23} style={{ color: COLORS.blue }} aria-hidden="true" />
           </div>
-          <ArrowUp size={32} strokeWidth={2} style={{ color: COLORS.green }} aria-hidden="true" />
+          <p className="text-3xl sm:text-4xl font-bold tracking-tight break-words" style={{ color: COLORS.blue }}>{formatCurrency(balance)}</p>
+          <p className="text-sm mt-3 capitalize" style={{ color: COLORS.blue }}>{monthLabel}</p>
         </div>
-
-        {/* Card Laranja - Saídas */}
-        <div className="p-6 rounded-3xl bg-alert flex items-center justify-between shadow-sm" aria-label="Dinheiro que saiu este mês">
-          <div>
-            <p className="text-base font-medium mb-1" style={{ color: COLORS.orange }}>O que saiu este mês</p>
-            <p className="text-3xl font-bold" style={{ color: COLORS.orange }}>{formatCurrency(expense)}</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="min-w-0 rounded-2xl bg-success p-4" aria-label="Dinheiro que entrou este mês">
+            <div className="flex items-center justify-between gap-1 mb-3">
+              <p className="text-sm font-semibold" style={{ color: COLORS.green }}>Entradas</p>
+              <ArrowUpRight size={19} style={{ color: COLORS.green }} aria-hidden="true" />
+            </div>
+            <p className="text-lg sm:text-xl font-bold break-words" style={{ color: COLORS.green }}>{formatCurrency(income)}</p>
           </div>
-          <ArrowDown size={32} strokeWidth={2} style={{ color: COLORS.orange }} aria-hidden="true" />
-        </div>
-
-        {/* Card Azul - Sobrou */}
-        <div className="p-6 rounded-3xl bg-calm flex items-center justify-between shadow-sm" aria-label="Saldo restante para você">
-          <div>
-            <p className="text-base font-medium mb-1" style={{ color: COLORS.blue }}>O que sobrou para você</p>
-            <p className="text-3xl font-bold" style={{ color: COLORS.blue }}>{formatCurrency(balance)}</p>
+          <div className="min-w-0 rounded-2xl bg-alert p-4" aria-label="Dinheiro que saiu este mês">
+            <div className="flex items-center justify-between gap-1 mb-3">
+              <p className="text-sm font-semibold" style={{ color: COLORS.orange }}>Saídas</p>
+              <ArrowDownRight size={19} style={{ color: COLORS.orange }} aria-hidden="true" />
+            </div>
+            <p className="text-lg sm:text-xl font-bold break-words" style={{ color: COLORS.orange }}>{formatCurrency(expense)}</p>
           </div>
-          <Star size={36} strokeWidth={1.5} fill={COLORS.blue} style={{ color: COLORS.blue }} aria-hidden="true" />
         </div>
       </section>
 
       <section aria-label="Últimas movimentações">
-        <h2 className="text-lg font-semibold text-text mb-4 px-1">Últimas movimentações</h2>
+        <div className="flex items-center justify-between mb-4 px-1">
+          <h2 className="text-lg font-semibold text-text">Últimas movimentações</h2>
+          <span className="text-xs text-text/60">Toque para editar</span>
+        </div>
         {recent.length > 0 ? (
-          <ul className="space-y-3">
-            {recent.map((t) => (
-              <li
-                key={t.id}
-                onClick={() => onEdit(t)}
-                className="p-4 rounded-2xl bg-[#3A3A3A] border border-calm/20 flex items-center justify-between hover:bg-[#404040] hover:border-calm/40 transition cursor-pointer focus-within:ring-2 focus-within:ring-calm"
-                tabIndex={0}
-                role="button"
-                onKeyDown={(e) => e.key === 'Enter' && onEdit(t)}
-                aria-label={`Editar transação: ${t.description}, valor ${formatCurrency(t.amount)}`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-2.5 h-2.5 rounded-full ${t.type === 'income' ? 'bg-success' : 'bg-alert'}`} aria-hidden="true" />
-                  <span className="text-text font-medium">{t.description}</span>
-                </div>
-                <span className={`font-semibold ${t.type === 'income' ? 'text-success' : 'text-alert'}`}>
-                  {t.type === 'income' ? '+' : '-'} {formatCurrency(t.amount)}
-                </span>
+          <ul className="space-y-2">
+            {recent.map(t => (
+              <li key={t.id}>
+                <button type="button" onClick={() => onEdit(t)} className="w-full p-4 rounded-2xl bg-[#3A3A3A] border border-calm/20 flex items-center justify-between gap-3 text-left hover:bg-[#444444] hover:border-calm/50 transition focus-visible:ring-2 focus-visible:ring-calm" aria-label={`Editar transação: ${t.description}, valor ${formatCurrency(t.amount)}`}>
+                  <span className="min-w-0 flex items-center gap-3">
+                    <span className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center ${t.type === 'income' ? 'bg-success/15 text-success' : 'bg-alert/15 text-alert'}`}>
+                      {t.type === 'income' ? <ArrowUpRight size={20} aria-hidden="true" /> : <ArrowDownRight size={20} aria-hidden="true" />}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-text font-medium truncate">{t.description}</span>
+                      <span className="block text-xs text-text/60">{new Date(t.timestamp).toLocaleDateString('pt-BR')}</span>
+                    </span>
+                  </span>
+                  <span className="flex shrink-0 items-center gap-1">
+                    <span className={`text-sm font-semibold ${t.type === 'income' ? 'text-success' : 'text-alert'}`}>{t.type === 'income' ? '+' : '−'} {formatCurrency(t.amount)}</span>
+                    <ChevronRight size={15} className="text-text/50" aria-hidden="true" />
+                  </span>
+                </button>
               </li>
             ))}
           </ul>
         ) : (
-          <div className="p-8 rounded-3xl bg-[#3A3A3A] border border-calm/10 flex flex-col items-center justify-center text-center">
-            <Clock size={28} strokeWidth={1.5} className="text-calm/60 mb-3" aria-hidden="true" />
-            <p className="text-text/60">Nenhuma movimentação ainda.<br/>Toque no microfone para começar!</p>
+          <div className="p-8 rounded-3xl bg-[#3A3A3A] border border-calm/20 flex flex-col items-center justify-center text-center">
+            <Clock size={30} className="text-calm mb-3" aria-hidden="true" />
+            <p className="font-semibold text-text">Seu histórico começa aqui</p>
+            <p className="text-sm text-text/70 mt-2">Adicione uma entrada ou saída para acompanhar suas finanças.</p>
           </div>
         )}
       </section>
