@@ -3,10 +3,16 @@
 @import '@fontsource/lexend/500.css';
 @import '@fontsource/lexend/600.css';
 @import '@fontsource/lexend/700.css';
+@import "tailwindcss";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@theme {
+  --color-bg: #333333;
+  --color-text: #FEFDF5;
+  --color-success: #AEEFD0;
+  --color-calm: #AED9E0;
+  --color-alert: #FFB347;
+  --font-sans: 'Lexend', sans-serif;
+}
 
 body {
   background-color: #333333;
