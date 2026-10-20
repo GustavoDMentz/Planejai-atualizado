@@ -16,16 +16,18 @@ function isTransaction(value: unknown): value is ExtractedTransaction {
     typeof v.descricao === 'string' && v.descricao.trim().length > 0 && v.descricao.length <= 240;
 }
 
-/**
- * Fail closed: no Gemini credential is shipped in the browser.
- * Audio processing remains unavailable until an authenticated, rate-limited
- * server-side integration is implemented.
- */
+/** Sends short audio to a server endpoint; never stores a Gemini key in the browser. */
 export async function extractTransactionFromAudio(
-  _base64Audio: string,
-  _mimeType: string = 'audio/webm'
+  base64Audio: string,
+  mimeType: string = 'audio/webm'
 ): Promise<ExtractedTransaction> {
-  throw new Error('Registro por voz temporariamente indisponível por segurança. Use o registro manual.');
+  const response = await fetch('/api/voice', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ audio: base64Audio, mimeType }),
+  });
+  if (!response.ok) throw new Error('Serviço de voz indisponível.');
+  return validateExtractedTransaction(await response.json());
 }
 
 export function validateExtractedTransaction(value: unknown): ExtractedTransaction {
