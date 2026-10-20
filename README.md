@@ -18,6 +18,8 @@ O Planejaí busca apoiar a autonomia na organização financeira de um pequeno n
 
 Os registros são armazenados **somente no IndexedDB deste navegador e deste dispositivo** (Dexie). Não há login, sincronização entre aparelhos nem backup automático em nuvem.
 
+**Estado do MVP:** o armazenamento local atual permite manter registros entre sessões normais do navegador, mas **a estratégia definitiva de persistência, backup e recuperação ainda está em estudo**. Ainda não há garantia de recuperação se os dados do navegador forem removidos ou se o aparelho for perdido. A escolha futura será orientada por testes em dispositivos móveis e pelas necessidades de acessibilidade do público-alvo; não há backend ou serviço de nuvem definido.
+
 **Atenção: apagar os dados do navegador, usar outro perfil ou trocar de aparelho pode fazer os registros desaparecerem.** Exporte backups periodicamente e antes de trocar de dispositivo. O backup é um arquivo JSON **sem criptografia**: guarde-o em local privado e confiável. Restaurar um backup **substitui todos os registros atuais** após confirmação.
 
 O saldo exibido é **entradas menos saídas registradas** no período. Não é lucro líquido, saldo bancário conciliado ou relatório contábil.
