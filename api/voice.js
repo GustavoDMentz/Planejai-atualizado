@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'node:crypto';
 /** Vercel Node.js Function. No Gemini credentials are exposed to the browser. */
 const MAX_AUDIO_BYTES = 160_000;
 const ALLOWED_MIME = new Set(['audio/webm', 'audio/mp4', 'audio/ogg']);
@@ -24,6 +25,14 @@ export default async function handler(req, res) {
   // Fail closed until rate limits / abuse prevention are configured at the edge.
   if (process.env.VOICE_ENABLED !== 'true') {
     return res.status(503).json({ error: 'Registro por voz ainda não habilitado.' });
+  }
+  // Preview-only shared test secret. This is not user authentication or rate limiting.
+  const expected = process.env.VOICE_TEST_TOKEN;
+  const supplied = req.headers['x-voice-test-token'];
+  if (typeof expected !== 'string' || expected.length < 32 ||
+      typeof supplied !== 'string' || supplied.length !== expected.length ||
+      !timingSafeEqual(Buffer.from(supplied), Buffer.from(expected))) {
+    return res.status(401).json({ error: 'Acesso de teste não autorizado.' });
   }
   const key = process.env.GEMINI_API_KEY;
   if (!key) return res.status(503).json({ error: 'Serviço de voz não configurado.' });
