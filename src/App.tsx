@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { db, Transaction } from './db';
 import { Dashboard } from './components/Dashboard';
+import { BackupControls } from './components/BackupControls';
 import { TranslatorDrawer } from './components/TranslatorDrawer';
 import { ManualEntryDrawer } from './components/ManualEntryDrawer';
 import { VoiceConfirmationDrawer } from './components/VoiceConfirmationDrawer';
@@ -173,6 +174,7 @@ export default function App() {
 
       <div className="flex-1 overflow-y-auto">
         <Dashboard onEdit={handleEdit} onOpenInsights={() => setIsInsightsOpen(true)} />
+        <BackupControls />
       </div>
 
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-40">

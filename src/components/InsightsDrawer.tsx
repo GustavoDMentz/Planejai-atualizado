@@ -21,12 +21,13 @@ export function InsightsDrawer({ open, onOpenChange, onOpenTranslator }: Insight
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      days.push(d.toISOString().split('T')[0]);
+      days.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
     }
 
     return days.map(day => {
       const dayTransactions = transactions.filter(t => {
-        const tDate = new Date(t.timestamp).toISOString().split('T')[0];
+        const date = new Date(t.timestamp);
+        const tDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
         return tDate === day;
       });
       const income = dayTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
@@ -93,7 +94,7 @@ export function InsightsDrawer({ open, onOpenChange, onOpenTranslator }: Insight
 
             <div>
               <h3 className="text-lg font-semibold text-text mb-3 flex items-center gap-2">
-                <TrendingUp size={20} className="text-calm" /> Saldo Acumulado
+                <TrendingUp size={20} className="text-calm" /> Saldo Acumulado (todo o histórico)
               </h3>
               <div className="h-48 w-full">
                 <ResponsiveContainer width="100%" height="100%">
