@@ -28,7 +28,7 @@ O projeto contém um manifesto de instalação, mas **não promete funcionamento
 
 ## Tecnologias
 
-React 18, TypeScript, Vite 5, Tailwind CSS 3, Radix UI, Dexie/IndexedDB, Recharts e Lucide. Aplicação estática, sem backend.
+React 18, TypeScript, Vite 8, Tailwind CSS 4, Radix UI, Dexie/IndexedDB, Recharts e Lucide. Aplicação estática, sem backend.
 
 ## Desenvolvimento
 
