@@ -39,11 +39,11 @@ export function ManualEntryDrawer({ open, onOpenChange, onSuccess, transaction }
     if (!amount) return;
     setIsSaving(true);
     try {
-      const normalized = amount.trim().replace(/\\s/g, '');
-      if (!/^(?:\\d{1,3}(?:\\.\\d{3})+|\\d+)(?:,\\d{1,2})?$/.test(normalized)) {
+      const normalized = amount.trim().replace(/\s/g, '');
+      if (!/^(?:\d{1,3}(?:\.\d{3})+|\d+)(?:,\d{1,2})?$/.test(normalized)) {
         throw new Error('Valor inválido');
       }
-      const parsedAmount = Number(normalized.replace(/\\./g, '').replace(',', '.'));
+      const parsedAmount = Number(normalized.replace(/\./g, '').replace(',', '.'));
       if (!Number.isFinite(parsedAmount) || parsedAmount <= 0 || parsedAmount > 1_000_000_000) {
         throw new Error('Valor fora dos limites permitidos');
       }
