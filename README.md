@@ -43,6 +43,11 @@ O envio de áudio e a integração com Gemini foram desativados por segurança. 
 - Interface otimizada para mobile com navegação por drawer
 - Aviso de compatibilidade de browser integrado
 
+### 💾 Backup e restauração
+- Use **Exportar backup** para salvar um JSON local.
+- **Restaurar backup** valida o arquivo e substitui todos os registros em uma única transação atômica, após confirmação.
+- Faça uma cópia antes de restaurar. O arquivo contém dados financeiros pessoais sem criptografia.
+
 ### 💾 100% Local — Sem Backend
 - Todos os dados ficam no **IndexedDB do próprio navegador** via [Dexie.js](https://dexie.org)
 - As transações são armazenadas localmente; a integração de áudio com um serviço externo está temporariamente desabilitada por segurança
