@@ -80,7 +80,11 @@ export function BackupControls() {
 
   return (
     <section aria-label="Backup de dados" className="w-full max-w-lg mx-auto px-4 pb-6">
-      <div className="pt-5 border-t border-calm/20">\n        <h2 className="text-sm font-semibold text-text mb-1">Seus dados, sob seu controle</h2>\n        <p className="text-xs text-text/70 mb-3">Salve uma cópia antes de trocar de navegador ou dispositivo.</p>\n      </div>\n      <div className="flex gap-2">
+      <div className="pt-5 border-t border-calm/20">
+        <h2 className="text-sm font-semibold text-text mb-1">Seus dados, sob seu controle</h2>
+        <p className="text-xs text-text/70 mb-3">Salve uma cópia antes de trocar de navegador ou dispositivo.</p>
+      </div>
+      <div className="flex gap-2">
         <button type="button" disabled={busy} onClick={exportBackup} className="flex-1 rounded-xl bg-[#414141] border border-calm/40 p-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-calm disabled:opacity-50">Exportar backup</button>
         <button type="button" disabled={busy} onClick={() => inputRef.current?.click()} className="flex-1 rounded-xl border border-calm/40 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-calm disabled:opacity-50">Restaurar backup</button>
       </div>
