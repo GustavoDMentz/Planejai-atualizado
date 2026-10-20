@@ -176,29 +176,41 @@ export default function App() {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto pb-24">
+      <div className="flex-1 overflow-y-auto pb-32">
         <Dashboard onEdit={handleEdit} onOpenInsights={() => setIsInsightsOpen(true)} />
         <TranslatorDrawer open={isTranslatorOpen} onOpenChange={setIsTranslatorOpen} />
         <BackupControls />
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 z-40 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-5 bg-gradient-to-t from-bg via-bg/95 to-transparent pointer-events-none">
+      <div className="fixed bottom-0 left-0 right-0 z-40 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 bg-gradient-to-t from-bg via-bg/95 to-transparent pointer-events-none">
         <div className="max-w-lg mx-auto pointer-events-auto">
-          <button type="button" onClick={() => setIsManualOpen(true)} className="w-full min-h-14 rounded-2xl bg-success text-[#0F2A1A] font-bold text-base flex items-center justify-center gap-3 shadow-xl shadow-black/25 hover:brightness-105 transition focus-visible:ring-4 focus-visible:ring-calm" aria-label="Registrar entrada ou saída">
-            <Plus size={22} strokeWidth={2.5} aria-hidden="true" /> Adicionar movimentação
-          </button>
-          {import.meta.env.VITE_VOICE_ENABLED === 'true' && (
-            <button
-              type="button"
-              onClick={toggleRecording}
-              disabled={isProcessing}
-              aria-label={isProcessing ? 'Processando áudio' : isRecording ? 'Parar gravação de voz' : 'Registrar movimentação por voz'}
-              aria-pressed={isRecording}
-              aria-busy={isProcessing}
-              className={`mt-3 w-full min-h-16 px-5 py-4 rounded-2xl border-2 font-bold text-lg flex items-center justify-center gap-3 shadow-lg transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-calm disabled:opacity-70 disabled:cursor-wait ${isRecording ? 'bg-alert text-[#2D1600] border-alert' : 'bg-[#3A3A3A] text-text border-calm hover:bg-[#454545]'}`}
-            >
-              {isProcessing ? <Loader2 size={28} className="animate-spin shrink-0" aria-hidden="true" /> : isRecording ? <MicOff size={28} className="shrink-0" aria-hidden="true" /> : <Mic size={28} className="shrink-0" aria-hidden="true" />}
-              <span>{isProcessing ? 'Interpretando áudio...' : isRecording ? 'Parar gravação' : 'Registrar por voz'}</span>
+          {import.meta.env.VITE_VOICE_ENABLED === 'true' ? (
+            <div className="flex gap-3 items-stretch">
+              <button
+                type="button"
+                onClick={toggleRecording}
+                disabled={isProcessing}
+                aria-label={isProcessing ? 'Processando áudio' : isRecording ? 'Parar gravação de voz' : 'Registrar movimentação por voz'}
+                aria-pressed={isRecording}
+                aria-busy={isProcessing}
+                className={`flex-[3] min-w-0 min-h-16 px-3 rounded-2xl font-bold text-base flex items-center justify-center gap-2 shadow-lg transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-calm disabled:opacity-70 disabled:cursor-wait ${isRecording ? 'bg-alert text-[#2D1600]' : 'bg-success text-[#0F2A1A] hover:brightness-105'}`}
+              >
+                {isProcessing ? <Loader2 size={24} className="animate-spin shrink-0" aria-hidden="true" /> : isRecording ? <MicOff size={24} className="shrink-0" aria-hidden="true" /> : <Mic size={24} className="shrink-0" aria-hidden="true" />}
+                <span>{isProcessing ? 'Processando...' : isRecording ? 'Parar gravação' : 'Registrar por voz'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsManualOpen(true)}
+                className="flex-[2] min-w-0 min-h-16 px-2 rounded-2xl border-2 border-calm/70 bg-[#3A3A3A] text-text font-semibold text-sm flex items-center justify-center gap-1.5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-calm"
+                aria-label="Adicionar movimentação manualmente"
+              >
+                <Plus size={20} className="shrink-0" aria-hidden="true" />
+                <span>Digitar</span>
+              </button>
+            </div>
+          ) : (
+            <button type="button" onClick={() => setIsManualOpen(true)} className="w-full min-h-14 rounded-2xl bg-success text-[#0F2A1A] font-bold text-base flex items-center justify-center gap-3 shadow-xl shadow-black/25 hover:brightness-105 transition focus-visible:ring-4 focus-visible:ring-calm" aria-label="Registrar entrada ou saída">
+              <Plus size={22} strokeWidth={2.5} aria-hidden="true" /> Adicionar movimentação
             </button>
           )}
         </div>
