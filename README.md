@@ -1,148 +1,61 @@
-<div align="center">
+# Planejaí
 
-# 💸 Planejaí
+**Gestão simples de entradas e saídas para pequenos empreendedores com deficiência**, incluindo pessoas que empreendem diante de barreiras de acesso ao mercado de trabalho.
 
-### Controle financeiro pessoal com registro manual
+O Planejaí busca apoiar a autonomia na organização financeira de um pequeno negócio. Não é um ERP contábil completo, não calcula lucro contábil nem substitui orientação profissional. A acessibilidade é parte do objetivo do produto, mas ainda precisa de validação com usuários reais e tecnologias assistivas.
 
-[![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://typescriptlang.org)
-[![Vite](https://img.shields.io/badge/Vite-5.4-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev)
-[![Tailwind](https://img.shields.io/badge/Tailwind_CSS-3.4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
-[![Gemini](https://img.shields.io/badge/Gemini_AI-Flash-4285F4?style=flat-square&logo=google&logoColor=white)](https://aistudio.google.com)
-[![PWA](https://img.shields.io/badge/PWA-Offline_Ready-5A0FC8?style=flat-square&logo=pwa&logoColor=white)]()
+## O que funciona hoje
 
-</div>
+- Registro manual de entradas e saídas, com edição e exclusão.
+- Resumo das movimentações do mês e histórico recente.
+- Gráficos de entradas e saídas nos últimos sete dias e saldo acumulado do histórico.
+- Tradutor de termos contábeis em linguagem simples.
+- Exportação e restauração de backup JSON, com validação, confirmação e substituição atômica dos registros.
 
-> App de finanças pessoais **mobile-first** com registro manual de transações, armazenamento local das transações (IndexedDB via Dexie) e dashboard com análise de gastos — tudo sem backend.
+**Registro por voz está indisponível por segurança.** Não há integração ativa com Gemini, nem chave de API no navegador. A experiência não deve ser apresentada como controle por voz até existir uma implementação segura e testada.
 
----
+## Dados, privacidade e limitações
 
-## ✨ Funcionalidades
+Os registros são armazenados **somente no IndexedDB deste navegador e deste dispositivo** (Dexie). Não há login, sincronização entre aparelhos nem backup automático em nuvem.
 
-### 🎙️ Registro por voz (temporariamente indisponível)
-O envio de áudio e a integração com Gemini foram desativados por segurança. Use a entrada manual.
+**Atenção: apagar os dados do navegador, usar outro perfil ou trocar de aparelho pode fazer os registros desaparecerem.** Exporte backups periodicamente e antes de trocar de dispositivo. O backup é um arquivo JSON **sem criptografia**: guarde-o em local privado e confiável. Restaurar um backup **substitui todos os registros atuais** após confirmação.
 
-### 📊 Dashboard Financeiro
-- Cards de **entradas**, **saídas** e **saldo do mês** em tempo real
-- Lista das **3 transações mais recentes**
-- Atualização **reativa** via `useLiveQuery` (Dexie) — sem refresh necessário
+O saldo exibido é **entradas menos saídas registradas** no período. Não é lucro líquido, saldo bancário conciliado ou relatório contábil.
 
-### 📈 Painel de Insights
-- Gráficos de evolução de gastos por categoria (Recharts)
-- Análise visual do histórico de transações
+O projeto contém um manifesto de instalação, mas **não promete funcionamento offline**: não há garantia de cache de aplicação para uso sem rede. A persistência dos dados locais depende das políticas de armazenamento do navegador.
 
-### ✏️ Entrada Manual
-- Drawer de formulário completo para cadastro manual de qualquer transação
-- Edição e exclusão de registros existentes
+## Tecnologias
 
-### 🔄 Tradutor de Transações
-- Drawer auxiliar para re-categorizar ou corrigir transações extraídas por voz
+React 18, TypeScript, Vite 5, Tailwind CSS 3, Radix UI, Dexie/IndexedDB, Recharts e Lucide. Aplicação estática, sem backend.
 
-### 📱 PWA — Funciona como App
-- Instalável na tela inicial do celular (manifest.webmanifest)
-- Interface otimizada para mobile com navegação por drawer
-- Aviso de compatibilidade de browser integrado
+## Desenvolvimento
 
-### 💾 Backup e restauração
-- Use **Exportar backup** para salvar um JSON local.
-- **Restaurar backup** valida o arquivo e substitui todos os registros em uma única transação atômica, após confirmação.
-- Faça uma cópia antes de restaurar. O arquivo contém dados financeiros pessoais sem criptografia.
-
-### 💾 100% Local — Sem Backend
-- Todos os dados ficam no **IndexedDB do próprio navegador** via [Dexie.js](https://dexie.org)
-- As transações são armazenadas localmente; a integração de áudio com um serviço externo está temporariamente desabilitada por segurança
-- O uso offline depende de cache prévio e de suporte PWA ainda não implementado
-
----
-
-## 🏗️ Stack Técnica
-
-| Camada | Tecnologia |
-|--------|-----------|
-| Framework | React 18 + TypeScript |
-| Build | Vite 5 |
-| Estilo | Tailwind CSS 3 + Fontsource (Lexend) |
-| Componentes UI | Radix UI (Dialog, ToggleGroup) + Lucide Icons |
-| Banco de dados | Dexie.js (IndexedDB) |
-| Gráficos | Recharts |
-| IA | Integração desativada por segurança |
-| PWA | Web App Manifest |
-
----
-
-## 🚀 Como rodar localmente
-
-### Pré-requisitos
-- Node.js 18+
-
-### Instalação
+Requer Node.js compatível com as dependências do projeto.
 
 ```bash
-# Clone o repositório
-git clone https://github.com/GustavoDMentz/Planejai-atualizado.git
-cd Planejai-atualizado
-
-# Instale as dependências
 npm install
-```
-
-### Variáveis de ambiente
-Nenhuma chave de API é necessária. **Não configure `VITE_GEMINI_API_KEY`: variáveis `VITE_` são públicas no navegador.**
-
-### Inicie o servidor de desenvolvimento
-
-```bash
 npm run dev
-```
-
-Acesse em: **http://localhost:5173**
-
-### Build de produção
-
-```bash
 npm run build
 npm run preview
 ```
 
-> **Dica:** Se mudanças de configuração ou estilos não refletirem, limpe o cache do Vite:
-> ```bash
-> rm -rf node_modules/.vite && npm run dev
-> ```
+Não configure segredos em variáveis `VITE_`: valores desse prefixo são incluídos no código entregue ao navegador. Nenhuma chave de API é necessária para o funcionamento atual.
 
----
+## Critérios antes do deploy público
 
-## 📂 Estrutura do Projeto
+- [ ] `npm run build` concluído sem erros.
+- [ ] `npm audit --omit=dev` revisado; dependências de desenvolvimento também avaliadas separadamente, sem atualizações major automáticas.
+- [ ] Registrar, editar, excluir e restaurar dados de teste; conferir persistência após recarregar a página.
+- [ ] Confirmar que um backup inválido não apaga os dados existentes e que o usuário compreende a substituição na restauração.
+- [ ] Testar teclado (Tab, Enter, Esc), foco, zoom de 200%, viewport móvel e pelo menos um leitor de tela.
+- [ ] Revisar mensagens e fluxos com pessoas com deficiência, quando possível; testes técnicos não equivalem a validação de acessibilidade.
+- [ ] Conferir HTTPS, configuração do domínio, respostas HTTP e publicação estática no provedor escolhido.
+- [ ] Confirmar ausência de chaves, arquivos `.env` e dados reais no bundle de produção.
 
-```
-Planejai-atualizado/
-├── public/
-│   └── manifest.webmanifest      # Configuração PWA
-├── src/
-│   ├── components/
-│   │   ├── Dashboard.tsx          # Painel principal com cards e saldo
-│   │   ├── InsightsDrawer.tsx     # Drawer de gráficos e análises
-│   │   ├── ManualEntryDrawer.tsx  # Formulário de entrada manual
-│   │   ├── TranslatorDrawer.tsx   # Re-categorização de transações
-│   │   ├── VoiceConfirmationDrawer.tsx  # Confirmação pós-gravação
-│   │   ├── BrowserWarningModal.tsx      # Aviso de compatibilidade
-│   │   └── BrowserWarningToast.tsx
-│   ├── lib/
-│   │   └── gemini.ts              # Integração com a API Gemini (áudio → JSON)
-│   ├── db.ts                      # Schema e instância do Dexie (IndexedDB)
-│   ├── App.tsx                    # Componente raiz e orquestração de estado
-│   ├── main.tsx                   # Entry point
-│   └── index.css                  # Estilos globais e tokens Tailwind
-├── tailwind.config.js
-├── vite.config.ts
-└── package.json
-```
+## Deploy e manutenção
 
----
+Publicar somente depois dos critérios de aceitação. Um provedor de hospedagem estática, como a Vercel, é suficiente para a arquitetura atual. Revisar dependências e falhas de segurança periodicamente, com alterações pequenas e testadas. Evitar ampliar o escopo sem necessidade demonstrada.
 
-## 🔐 Segurança e persistência
+## Licença
 
-Não coloque segredos em variáveis `VITE_`. Os registros ficam no IndexedDB do navegador e podem ser perdidos se o armazenamento local for apagado. Exporte backups regularmente e mantenha os arquivos em local seguro.
-
-## 📄 Licença
-
-MIT — uso livre.
+Verificar o arquivo de licença e a titularidade do projeto antes de declarar condições de reutilização pública.
