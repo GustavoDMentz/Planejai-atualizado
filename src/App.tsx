@@ -174,6 +174,7 @@ export default function App() {
 
       <div className="flex-1 overflow-y-auto pb-24">
         <Dashboard onEdit={handleEdit} onOpenInsights={() => setIsInsightsOpen(true)} />
+        <TranslatorDrawer open={isTranslatorOpen} onOpenChange={setIsTranslatorOpen} />
         <BackupControls />
       </div>
 
@@ -191,7 +192,6 @@ export default function App() {
         </div>
       </div>
 
-      <TranslatorDrawer open={isTranslatorOpen} onOpenChange={setIsTranslatorOpen} />
       <ManualEntryDrawer 
         open={isDrawerOpen} 
         onOpenChange={(open) => {
