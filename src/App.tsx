@@ -172,43 +172,16 @@ export default function App() {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto pb-24">
         <Dashboard onEdit={handleEdit} onOpenInsights={() => setIsInsightsOpen(true)} />
         <BackupControls />
       </div>
 
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-40">
-        {(isRecording || isProcessing) && (
-          <span className={`text-sm font-medium animate-pulse ${isProcessing ? 'text-calm' : 'text-alert'}`}>
-            {isProcessing ? 'Processando com calma...' : 'Gravando áudio...'}
-          </span>
-        )}
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => setIsManualOpen(true)}
-            className="w-14 h-14 rounded-full bg-calm flex items-center justify-center shadow-lg hover:bg-calm/80 transition focus:outline-none focus:ring-4 focus:ring-calm"
-            aria-label="Adicionar transação manualmente"
-          >
-            <Plus size={24} strokeWidth={2} className="text-[#333333]" />
+      <div className="fixed bottom-0 left-0 right-0 z-40 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-5 bg-gradient-to-t from-bg via-bg/95 to-transparent pointer-events-none">
+        <div className="max-w-lg mx-auto pointer-events-auto">
+          <button type="button" onClick={() => setIsManualOpen(true)} className="w-full min-h-14 rounded-2xl bg-success text-[#0F2A1A] font-bold text-base flex items-center justify-center gap-3 shadow-xl shadow-black/25 hover:brightness-105 transition focus-visible:ring-4 focus-visible:ring-calm" aria-label="Adicionar movimentação">
+            <Plus size={22} strokeWidth={2.5} aria-hidden="true" /> Adicionar movimentação
           </button>
-          {!showVoiceConfirmation && (
-            <button
-              onClick={toggleRecording}
-              disabled={isProcessing}
-              className={`w-16 h-16 rounded-full flex items-center justify-center shadow-xl transition-all focus:outline-none focus:ring-4 focus:ring-calm ${
-                isRecording ? 'bg-alert animate-pulse' : isProcessing ? 'bg-calm/50 cursor-wait' : 'bg-success hover:opacity-90'
-              }`}
-              aria-label={isRecording ? 'Parar gravação' : 'Clique para gravar'}
-            >
-              {isProcessing ? (
-                <Loader2 size={24} strokeWidth={2} className="text-[#333333] animate-spin" />
-              ) : isRecording ? (
-                <MicOff size={24} strokeWidth={2} className="text-[#333333]" />
-              ) : (
-                <Mic size={24} strokeWidth={2} className="text-[#333333]" />
-              )}
-            </button>
-          )}
         </div>
       </div>
 
