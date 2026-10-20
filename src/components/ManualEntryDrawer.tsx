@@ -16,6 +16,7 @@ export function ManualEntryDrawer({ open, onOpenChange, onSuccess, transaction }
   const [description, setDescription] = useState('');
   const [type, setType] = useState<'income' | 'expense'>('expense');
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const isEditing = !!transaction;
@@ -32,11 +33,13 @@ export function ManualEntryDrawer({ open, onOpenChange, onSuccess, transaction }
         setType('expense');
       }
       setShowDeleteConfirm(false);
+      setSaveError('');
     }
   }, [open, transaction]);
 
   const handleSave = async () => {
     if (!amount) return;
+    setSaveError('');
     setIsSaving(true);
     try {
       const normalized = amount.trim().replace(/\s/g, '');
@@ -64,6 +67,7 @@ export function ManualEntryDrawer({ open, onOpenChange, onSuccess, transaction }
       onSuccess();
     } catch (error) {
       console.error('Erro ao salvar:', error);
+      setSaveError(error instanceof Error && error.message === 'Valor inválido' ? 'Confira o valor informado. Exemplo: 25,50.' : error instanceof Error && error.message === 'Valor fora dos limites permitidos' ? 'Informe um valor maior que zero e de até R$ 1 bilhão.' : 'Não foi possível salvar. Tente novamente.');
     } finally {
       setIsSaving(false);
     }
@@ -77,6 +81,7 @@ export function ManualEntryDrawer({ open, onOpenChange, onSuccess, transaction }
       onSuccess();
     } catch (error) {
       console.error('Erro ao excluir:', error);
+      setSaveError('Não foi possível excluir. Tente novamente.');
     }
   };
 
@@ -84,7 +89,7 @@ export function ManualEntryDrawer({ open, onOpenChange, onSuccess, transaction }
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" />
-        <Dialog.Content className="fixed bottom-0 left-0 right-0 z-50 bg-[#333333] rounded-t-3xl p-6 max-h-[60vh] focus:outline-none shadow-2xl border-t border-calm/20">
+        <Dialog.Content className="fixed bottom-0 left-0 right-0 z-50 bg-[#333333] rounded-t-3xl p-6 max-h-[90dvh] overflow-y-auto focus:outline-none shadow-2xl border-t border-calm/20">
           <div className="flex justify-between items-center mb-6">
             <Dialog.Title className="text-xl font-bold text-text">
               {isEditing ? 'Editar Movimentação' : 'Registrar Manualmente'}
@@ -96,8 +101,9 @@ export function ManualEntryDrawer({ open, onOpenChange, onSuccess, transaction }
 
           <div className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-text/70 mb-2">Valor (R$)</label>
+              <label htmlFor="transaction-amount" className="block text-base font-medium text-text mb-2">Valor (R$)</label>
               <input
+                id="transaction-amount"
                 type="text"
                 inputMode="decimal"
                 value={amount}
@@ -109,8 +115,9 @@ export function ManualEntryDrawer({ open, onOpenChange, onSuccess, transaction }
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-text/70 mb-2">O que é?</label>
+              <label htmlFor="transaction-description" className="block text-base font-medium text-text mb-2">O que é?</label>
               <input
+                id="transaction-description"
                 type="text"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -121,13 +128,13 @@ export function ManualEntryDrawer({ open, onOpenChange, onSuccess, transaction }
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-text/70 mb-2">Tipo</label>
+              <p className="block text-base font-medium text-text mb-2">Tipo de movimentação</p>
               <ToggleGroup.Root
                 type="single"
                 value={type}
                 onValueChange={(val) => val && setType(val as 'income' | 'expense')}
                 className="flex w-full rounded-xl overflow-hidden border-2 border-calm/30"
-                aria-label="Tipo de transação"
+                aria-label="Tipo de movimentação"
               >
                 <ToggleGroup.Item
                   value="income"
@@ -178,6 +185,8 @@ export function ManualEntryDrawer({ open, onOpenChange, onSuccess, transaction }
                 </div>
               </div>
             ) : null}
+
+            {saveError && <p role="alert" className="rounded-xl border border-alert/50 bg-alert/10 p-3 text-base text-text">{saveError}</p>}
 
             <button
               onClick={handleSave}
