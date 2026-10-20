@@ -179,7 +179,7 @@ export default function App() {
 
       <div className="fixed bottom-0 left-0 right-0 z-40 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-5 bg-gradient-to-t from-bg via-bg/95 to-transparent pointer-events-none">
         <div className="max-w-lg mx-auto pointer-events-auto">
-          <button type="button" onClick={() => setIsManualOpen(true)} className="w-full min-h-14 rounded-2xl bg-success text-[#0F2A1A] font-bold text-base flex items-center justify-center gap-3 shadow-xl shadow-black/25 hover:brightness-105 transition focus-visible:ring-4 focus-visible:ring-calm" aria-label="Adicionar movimentação">
+          <button type="button" onClick={() => setIsManualOpen(true)} className="w-full min-h-14 rounded-2xl bg-success text-[#0F2A1A] font-bold text-base flex items-center justify-center gap-3 shadow-xl shadow-black/25 hover:brightness-105 transition focus-visible:ring-4 focus-visible:ring-calm" aria-label="Registrar entrada ou saída">
             <Plus size={22} strokeWidth={2.5} aria-hidden="true" /> Adicionar movimentação
           </button>
           {import.meta.env.DEV && (
