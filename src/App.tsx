@@ -182,6 +182,12 @@ export default function App() {
           <button type="button" onClick={() => setIsManualOpen(true)} className="w-full min-h-14 rounded-2xl bg-success text-[#0F2A1A] font-bold text-base flex items-center justify-center gap-3 shadow-xl shadow-black/25 hover:brightness-105 transition focus-visible:ring-4 focus-visible:ring-calm" aria-label="Adicionar movimentação">
             <Plus size={22} strokeWidth={2.5} aria-hidden="true" /> Adicionar movimentação
           </button>
+          {import.meta.env.DEV && (
+            <button type="button" onClick={toggleRecording} disabled={isProcessing} className="mt-2 mx-auto flex items-center justify-center gap-2 text-xs text-text/60 underline underline-offset-4" aria-label="Testar microfone em desenvolvimento">
+              {isProcessing ? <Loader2 size={14} className="animate-spin" /> : isRecording ? <MicOff size={14} /> : <Mic size={14} />}
+              {isProcessing ? 'Processando áudio' : isRecording ? 'Parar teste de voz' : 'Teste de voz (desenvolvimento)'}
+            </button>
+          )}
         </div>
       </div>
 
