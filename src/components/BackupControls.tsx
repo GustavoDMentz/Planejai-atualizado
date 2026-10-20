@@ -85,7 +85,7 @@ export function BackupControls() {
         <button type="button" disabled={busy} onClick={() => inputRef.current?.click()} className="flex-1 rounded-xl border border-calm/40 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-calm disabled:opacity-50">Restaurar backup</button>
       </div>
       <input ref={inputRef} type="file" accept=".json,application/json" className="hidden" aria-label="Selecionar backup JSON" onChange={event => { void importBackup(event.target.files?.[0]); }} />
-      {message && <p role="status" className="mt-2 text-xs text-text/80">{message}</p>}
+      {message && <p role="status" className="mt-3 rounded-lg border border-calm/40 bg-[#3A3A3A] px-3 py-3 text-base font-medium text-text">{message}</p>}
     </section>
   );
 }
