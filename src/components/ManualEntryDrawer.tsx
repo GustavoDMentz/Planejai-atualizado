@@ -39,13 +39,20 @@ export function ManualEntryDrawer({ open, onOpenChange, onSuccess, transaction }
     if (!amount) return;
     setIsSaving(true);
     try {
-      const parsedAmount = parseFloat(amount.replace(',', '.'));
+      const normalized = amount.trim().replace(/\\s/g, '');
+      if (!/^(?:\\d{1,3}(?:\\.\\d{3})+|\\d+)(?:,\\d{1,2})?$/.test(normalized)) {
+        throw new Error('Valor inválido');
+      }
+      const parsedAmount = Number(normalized.replace(/\\./g, '').replace(',', '.'));
+      if (!Number.isFinite(parsedAmount) || parsedAmount <= 0 || parsedAmount > 1_000_000_000) {
+        throw new Error('Valor fora dos limites permitidos');
+      }
       const data = {
         type,
         amount: parsedAmount,
         description: description.trim() || 'Sem nome',
-        category: 'Manual',
-        timestamp: new Date(),
+        category: isEditing && transaction ? transaction.category : 'Manual',
+        timestamp: isEditing && transaction ? transaction.timestamp : new Date(),
       };
 
       if (isEditing && transaction?.id) {
