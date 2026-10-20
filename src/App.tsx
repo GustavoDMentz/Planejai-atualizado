@@ -41,6 +41,11 @@ export default function App() {
   };
 
   const toggleRecording = useCallback(async () => {
+    if (!import.meta.env.DEV) {
+      setIsManualOpen(true);
+      showToast('Registro por voz desabilitado até a integração segura com a API.');
+      return;
+    }
     if (isRecording) {
       mediaRecorderRef.current?.stop();
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -92,7 +97,7 @@ export default function App() {
             });
             setShowVoiceConfirmation(true);
           } catch {
-            showToast('O barulho do mundo me atrapalhou um pouco. Pode repetir com calma?');
+            showToast('Registro por voz indisponível por segurança. Use a entrada manual.');
           } finally {
             setIsProcessing(false);
           }
