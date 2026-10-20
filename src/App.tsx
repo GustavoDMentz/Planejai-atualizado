@@ -188,9 +188,17 @@ export default function App() {
             <Plus size={22} strokeWidth={2.5} aria-hidden="true" /> Adicionar movimentação
           </button>
           {import.meta.env.VITE_VOICE_ENABLED === 'true' && (
-            <button type="button" onClick={toggleRecording} disabled={isProcessing} className="mt-2 mx-auto flex items-center justify-center gap-2 text-xs text-text/60 underline underline-offset-4" aria-label="Registrar movimentação por voz">
-              {isProcessing ? <Loader2 size={14} className="animate-spin" /> : isRecording ? <MicOff size={14} /> : <Mic size={14} />}
-              {isProcessing ? 'Processando áudio' : isRecording ? 'Parar teste de voz' : 'Registrar por voz'}
+            <button
+              type="button"
+              onClick={toggleRecording}
+              disabled={isProcessing}
+              aria-label={isProcessing ? 'Processando áudio' : isRecording ? 'Parar gravação de voz' : 'Registrar movimentação por voz'}
+              aria-pressed={isRecording}
+              aria-busy={isProcessing}
+              className={`mt-3 w-full min-h-16 px-5 py-4 rounded-2xl border-2 font-bold text-lg flex items-center justify-center gap-3 shadow-lg transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-calm disabled:opacity-70 disabled:cursor-wait ${isRecording ? 'bg-alert text-[#2D1600] border-alert' : 'bg-[#3A3A3A] text-text border-calm hover:bg-[#454545]'}`}
+            >
+              {isProcessing ? <Loader2 size={28} className="animate-spin shrink-0" aria-hidden="true" /> : isRecording ? <MicOff size={28} className="shrink-0" aria-hidden="true" /> : <Mic size={28} className="shrink-0" aria-hidden="true" />}
+              <span>{isProcessing ? 'Interpretando áudio...' : isRecording ? 'Parar gravação' : 'Registrar por voz'}</span>
             </button>
           )}
         </div>
