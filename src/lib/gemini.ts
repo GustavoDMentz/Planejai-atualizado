@@ -19,11 +19,12 @@ function isTransaction(value: unknown): value is ExtractedTransaction {
 /** Sends short audio to a server endpoint; never stores a Gemini key in the browser. */
 export async function extractTransactionFromAudio(
   base64Audio: string,
-  mimeType: string = 'audio/webm'
+  mimeType: string = 'audio/webm',
+  testToken: string
 ): Promise<ExtractedTransaction> {
   const response = await fetch('/api/voice', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-voice-test-token': testToken },
     body: JSON.stringify({ audio: base64Audio, mimeType }),
   });
   if (!response.ok) throw new Error('Serviço de voz indisponível.');
