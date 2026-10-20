@@ -47,10 +47,10 @@ export function Dashboard({ onEdit, onOpenInsights }: DashboardProps) {
   const monthLabel = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(now);
 
   return (
-    <div className="w-full max-w-lg mx-auto px-4 pt-6 pb-10 space-y-7" aria-label="Painel financeiro">
+    <div className="w-full max-w-lg mx-auto px-4 pt-6 pb-10 space-y-7" aria-label="Painel do negócio">
       <header className="flex items-center justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.18em] text-calm/80 font-semibold">Suas finanças, sem complicação</p>
+          <p className="text-xs uppercase tracking-[0.18em] text-calm/80 font-semibold">Seu negócio, do seu jeito</p>
           <h1 className="text-3xl font-bold text-text mt-1">Planejaí<span className="text-success">.</span></h1>
         </div>
         <button type="button" onClick={onOpenInsights} className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-[#414141] border border-calm/20 text-text text-sm font-semibold hover:border-calm/60 transition focus-visible:ring-2 focus-visible:ring-calm" aria-label="Abrir meus gráficos">
@@ -61,13 +61,13 @@ export function Dashboard({ onEdit, onOpenInsights }: DashboardProps) {
       <section aria-label="Resumo do mês" className="space-y-3">
         <div className="rounded-3xl bg-calm p-6 shadow-lg shadow-black/10">
           <div className="flex items-center justify-between gap-3 mb-5">
-            <p className="text-sm font-semibold" style={{ color: COLORS.blue }}>Saldo do mês</p>
+            <p className="text-sm font-semibold" style={{ color: COLORS.blue }}>Saldo do negócio neste mês</p>
             <Wallet size={23} style={{ color: COLORS.blue }} aria-hidden="true" />
           </div>
           <p className="text-3xl sm:text-4xl font-bold tracking-tight break-words" style={{ color: COLORS.blue }}>{formatCurrency(balance)}</p>
           <p className="text-sm mt-3 capitalize" style={{ color: COLORS.blue }}>{monthLabel}</p>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 min-[370px]:grid-cols-2 gap-3">
           <div className="min-w-0 rounded-2xl bg-success p-4" aria-label="Dinheiro que entrou este mês">
             <div className="flex items-center justify-between gap-1 mb-3">
               <p className="text-sm font-semibold" style={{ color: COLORS.green }}>Entradas</p>
@@ -88,7 +88,7 @@ export function Dashboard({ onEdit, onOpenInsights }: DashboardProps) {
       <section aria-label="Últimas movimentações">
         <div className="flex items-center justify-between mb-4 px-1">
           <h2 className="text-lg font-semibold text-text">Últimas movimentações</h2>
-          <span className="text-xs text-text/60">Toque para editar</span>
+          <span className="text-sm text-text/70">Toque para editar</span>
         </div>
         {recent.length > 0 ? (
           <ul className="space-y-2">
@@ -116,7 +116,7 @@ export function Dashboard({ onEdit, onOpenInsights }: DashboardProps) {
           <div className="p-8 rounded-3xl bg-[#3A3A3A] border border-calm/20 flex flex-col items-center justify-center text-center">
             <Clock size={30} className="text-calm mb-3" aria-hidden="true" />
             <p className="font-semibold text-text">Seu histórico começa aqui</p>
-            <p className="text-sm text-text/70 mt-2">Adicione uma entrada ou saída para acompanhar suas finanças.</p>
+            <p className="text-sm text-text/70 mt-2">Registre o que entrou ou saiu do seu negócio para acompanhar seu dinheiro.</p>
           </div>
         )}
       </section>
