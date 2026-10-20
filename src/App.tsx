@@ -42,7 +42,7 @@ export default function App() {
   };
 
   const toggleRecording = useCallback(async () => {
-    if (!import.meta.env.DEV) {
+    if (import.meta.env.VITE_VOICE_ENABLED !== 'true') {
       setIsManualOpen(true);
       showToast('Registro por voz desabilitado até a integração segura com a API.');
       return;
@@ -61,7 +61,8 @@ export default function App() {
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+      const mimeType = ['audio/webm', 'audio/mp4', 'audio/ogg'].find(type => MediaRecorder.isTypeSupported(type));
+      if (!mimeType) throw new Error('Formato de áudio não suportado');
       const mediaRecorder = new MediaRecorder(stream, { mimeType });
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
@@ -72,8 +73,6 @@ export default function App() {
       };
 
       mediaRecorder.onstop = async () => {
-        console.log('mimeType real:', mediaRecorder.mimeType);
-        console.log('chunks:', chunksRef.current.length, 'blob size:', chunksRef.current.reduce((a, b) => a + b.size, 0));
         
         setIsRecording(false);
         stream.getTracks().forEach(track => track.stop());
@@ -85,6 +84,11 @@ export default function App() {
 
         setIsProcessing(true);
         const blob = new Blob(chunksRef.current, { type: mimeTypeRef.current });
+        if (blob.size > 160_000) {
+          setIsProcessing(false);
+          showToast('Áudio muito grande. Tente novamente.');
+          return;
+        }
         const reader = new FileReader();
         reader.onloadend = async () => {
           const base64 = (reader.result as string).split(',')[1];
@@ -98,7 +102,7 @@ export default function App() {
             });
             setShowVoiceConfirmation(true);
           } catch {
-            showToast('Registro por voz indisponível por segurança. Use a entrada manual.');
+            showToast('Não foi possível interpretar o áudio. Use o registro manual.');
           } finally {
             setIsProcessing(false);
           }
@@ -113,7 +117,7 @@ export default function App() {
         if (mediaRecorderRef.current?.state === 'recording') {
           mediaRecorderRef.current.stop();
         }
-      }, 4000);
+      }, 5000);
     } catch (err) {
       console.error('Erro ao acessar microfone:', err);
       setIsManualOpen(true);
@@ -183,10 +187,10 @@ export default function App() {
           <button type="button" onClick={() => setIsManualOpen(true)} className="w-full min-h-14 rounded-2xl bg-success text-[#0F2A1A] font-bold text-base flex items-center justify-center gap-3 shadow-xl shadow-black/25 hover:brightness-105 transition focus-visible:ring-4 focus-visible:ring-calm" aria-label="Registrar entrada ou saída">
             <Plus size={22} strokeWidth={2.5} aria-hidden="true" /> Adicionar movimentação
           </button>
-          {import.meta.env.DEV && (
-            <button type="button" onClick={toggleRecording} disabled={isProcessing} className="mt-2 mx-auto flex items-center justify-center gap-2 text-xs text-text/60 underline underline-offset-4" aria-label="Testar microfone em desenvolvimento">
+          {import.meta.env.VITE_VOICE_ENABLED === 'true' && (
+            <button type="button" onClick={toggleRecording} disabled={isProcessing} className="mt-2 mx-auto flex items-center justify-center gap-2 text-xs text-text/60 underline underline-offset-4" aria-label="Registrar movimentação por voz">
               {isProcessing ? <Loader2 size={14} className="animate-spin" /> : isRecording ? <MicOff size={14} /> : <Mic size={14} />}
-              {isProcessing ? 'Processando áudio' : isRecording ? 'Parar teste de voz' : 'Teste de voz (desenvolvimento)'}
+              {isProcessing ? 'Processando áudio' : isRecording ? 'Parar teste de voz' : 'Registrar por voz'}
             </button>
           )}
         </div>
