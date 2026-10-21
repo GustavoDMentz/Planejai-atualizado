@@ -1,4 +1,4 @@
-/** Vercel Node.js Function. No Gemini credentials are exposed to the browser. */
+/** Vercel Node.js Function. Uses the caller's BYOK key; never persists it. */
 const MAX_AUDIO_BYTES = 160_000;
 const ALLOWED_MIME = new Set(['audio/webm', 'audio/mp4', 'audio/ogg']);
 const MODEL = process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
@@ -24,6 +24,12 @@ export default async function handler(req, res) {
   // Fail closed until rate limits / abuse prevention are configured at the edge.
   if (process.env.VOICE_ENABLED !== 'true') {
     return res.status(503).json({ error: 'Registro por voz ainda não habilitado.' });
+  }
+  if (!/^application\/json(?:\s*;|$)/i.test(req.headers['content-type'] || '')) {
+    return res.status(415).json({ error: 'Tipo de conteúdo não suportado.' });
+  }
+  if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
+    return res.status(400).json({ error: 'Requisição inválida.' });
   }
   // BYOK: no project-wide Gemini key, no test bearer token.
   // Origin checks reduce accidental cross-site use, but are not authentication.
