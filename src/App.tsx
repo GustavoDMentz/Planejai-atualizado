@@ -43,7 +43,7 @@ export default function App() {
 
   const saveVoiceKey = () => {
     const key = keyDraft.trim();
-    if (!/^[A-Za-z0-9_-]{15,256}$/.test(key)) {
+    if (key.length < 8 || key.length > 256 || !/^[\x21-\x7E]+$/.test(key)) {
       showToast('Informe uma chave válida do Google AI Studio.');
       return;
     }
