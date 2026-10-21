@@ -35,7 +35,35 @@ export default function App() {
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mimeTypeRef = useRef<string>('audio/webm');
-  const voiceTestTokenRef = useRef<string>('');
+  const [voiceKey, setVoiceKey] = useState(() => {
+    try { return localStorage.getItem('planejai-gemini-key') || ''; } catch { return ''; }
+  });
+  const [keyDraft, setKeyDraft] = useState('');
+  const [showKeySettings, setShowKeySettings] = useState(false);
+
+  const saveVoiceKey = () => {
+    const key = keyDraft.trim();
+    if (!/^[A-Za-z0-9_-]{15,256}$/.test(key)) {
+      showToast('Informe uma chave válida do Google AI Studio.');
+      return;
+    }
+    try {
+      localStorage.setItem('planejai-gemini-key', key);
+      setVoiceKey(key);
+      setKeyDraft('');
+      setShowKeySettings(false);
+      showToast('Chave salva somente neste navegador.');
+    } catch {
+      showToast('Não foi possível salvar a chave neste navegador.');
+    }
+  };
+  const deleteVoiceKey = () => {
+    try { localStorage.removeItem('planejai-gemini-key'); } catch { /* private mode */ }
+    setVoiceKey('');
+    setKeyDraft('');
+    setShowKeySettings(false);
+    showToast('Chave removida deste navegador.');
+  };
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -54,10 +82,10 @@ export default function App() {
       return;
     }
 
-    if (!voiceTestTokenRef.current) {
-      const token = window.prompt('Acesso restrito: informe o token temporário de teste do microfone.');
-      if (!token) return;
-      voiceTestTokenRef.current = token;
+    if (!voiceKey) {
+      setShowKeySettings(true);
+      showToast('Configure sua chave Gemini para usar o microfone.');
+      return;
     }
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -100,7 +128,7 @@ export default function App() {
         reader.onloadend = async () => {
           const base64 = (reader.result as string).split(',')[1];
           try {
-            const result = await extractTransactionFromAudio(base64, mimeTypeRef.current, voiceTestTokenRef.current);
+            const result = await extractTransactionFromAudio(base64, mimeTypeRef.current, voiceKey);
             setExtractedData({
               type: result.tipo === 'entrada' ? 'income' : 'expense',
               amount: result.valor,
@@ -130,7 +158,7 @@ export default function App() {
       setIsManualOpen(true);
       showToast('Não consegui acessar o microfone. Vamos digitar?');
     }
-  }, [isRecording]);
+  }, [isRecording, voiceKey]);
 
   const handleVoiceConfirm = async () => {
     if (!extractedData) return;
@@ -187,6 +215,29 @@ export default function App() {
         <Dashboard onEdit={handleEdit} onOpenInsights={() => setIsInsightsOpen(true)} />
         <TranslatorDrawer open={isTranslatorOpen} onOpenChange={setIsTranslatorOpen} />
         <BackupControls />
+        {import.meta.env.VITE_VOICE_ENABLED === 'true' && (
+          <section className="w-full max-w-lg mx-auto px-4 pb-6" aria-label="Configuração do microfone">
+            <button type="button" onClick={() => { setKeyDraft(''); setShowKeySettings(value => !value); }}
+              className="text-sm underline underline-offset-4 text-text/80 focus-visible:ring-2 focus-visible:ring-calm">
+              {voiceKey ? 'Configurar ou apagar chave do microfone' : 'Configurar chave do Google AI Studio'}
+            </button>
+            {showKeySettings && (
+              <div className="mt-3 p-4 rounded-xl border border-calm/40 bg-[#3A3A3A] space-y-3">
+                <p className="text-sm">Prova de conceito: sua chave fica neste navegador, sem criptografia. Scripts deste site podem acessá-la. O áudio e a chave são enviados à função da Vercel e depois ao Google para interpretação. Não use uma chave com faturamento habilitado sem entender os riscos.</p>
+                <label htmlFor="voice-key" className="block text-sm font-medium">Chave Gemini do AI Studio</label>
+                <input id="voice-key" type="password" autoComplete="off" spellCheck={false}
+                  value={keyDraft} onChange={event => setKeyDraft(event.target.value)}
+                  placeholder={voiceKey ? 'Nova chave (para substituir)' : 'Cole sua chave'}
+                  className="w-full min-h-12 rounded-lg p-3 bg-bg text-text border border-calm/50" />
+                <div className="flex gap-3 flex-wrap">
+                  <button type="button" onClick={saveVoiceKey} className="rounded-lg bg-success text-[#0F2A1A] font-bold px-4 py-3">Salvar chave</button>
+                  {voiceKey && <button type="button" onClick={deleteVoiceKey} className="rounded-lg border border-alert px-4 py-3">Apagar chave</button>}
+                  <button type="button" onClick={() => setShowKeySettings(false)} className="rounded-lg border border-calm/40 px-4 py-3">Cancelar</button>
+                </div>
+              </div>
+            )}
+          </section>
+        )
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 z-40 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 bg-gradient-to-t from-bg via-bg/95 to-transparent pointer-events-none">
