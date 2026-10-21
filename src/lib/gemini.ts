@@ -16,7 +16,7 @@ function isTransaction(value: unknown): value is ExtractedTransaction {
     typeof v.descricao === 'string' && v.descricao.trim().length > 0 && v.descricao.length <= 240;
 }
 
-/** Sends short audio to a server endpoint; never stores a Gemini key in the browser. */
+/** Sends short audio and the user's BYOK key to the same-origin server endpoint. */
 export async function extractTransactionFromAudio(
   base64Audio: string,
   mimeType: string = 'audio/webm',
