@@ -12,13 +12,13 @@ O Planejaí busca apoiar a autonomia na organização financeira de um pequeno n
 - Tradutor de termos contábeis em linguagem simples.
 - Exportação e restauração de backup JSON, com validação, confirmação e substituição atômica dos registros.
 
-**Registro por voz está indisponível por segurança.** Não há integração ativa com Gemini, nem chave de API no navegador. A experiência não deve ser apresentada como controle por voz até existir uma implementação segura e testada.
+**Registro por voz experimental (BYOK):** o usuário fornece uma chave do Google AI Studio, armazenada no localStorage do próprio navegador sem criptografia. O áudio e a chave são enviados via HTTPS à função `/api/voice` da Vercel e ao Google. A IA apenas sugere a transação; o usuário confirma antes de salvar. O microfone depende de `VITE_VOICE_ENABLED=true` no build e `VOICE_ENABLED=true` na função. Consulte `docs/voice-integration.md`.
 
 ## Dados, privacidade e limitações
 
 Os registros são armazenados **somente no IndexedDB deste navegador e deste dispositivo** (Dexie). Não há login, sincronização entre aparelhos nem backup automático em nuvem.
 
-**Estado do MVP:** o armazenamento local atual permite manter registros entre sessões normais do navegador, mas **a estratégia definitiva de persistência, backup e recuperação ainda está em estudo**. Ainda não há garantia de recuperação se os dados do navegador forem removidos ou se o aparelho for perdido. A escolha futura será orientada por testes em dispositivos móveis e pelas necessidades de acessibilidade do público-alvo; não há backend ou serviço de nuvem definido.
+**Estado da prova de conceito:** os registros permanecem localmente entre sessões normais, mas não há recuperação automática se o navegador for limpo ou o aparelho perdido. O único serviço remoto é o proxy de voz, que não armazena as transações. A chave de voz não entra no backup financeiro.
 
 **Atenção: apagar os dados do navegador, usar outro perfil ou trocar de aparelho pode fazer os registros desaparecerem.** Exporte backups periodicamente e antes de trocar de dispositivo. O backup é um arquivo JSON **sem criptografia**: guarde-o em local privado e confiável. Restaurar um backup **substitui todos os registros atuais** após confirmação.
 
@@ -28,7 +28,7 @@ O projeto contém um manifesto de instalação, mas **não promete funcionamento
 
 ## Tecnologias
 
-React 18, TypeScript, Vite 8, Tailwind CSS 4, Radix UI, Dexie/IndexedDB, Recharts e Lucide. Aplicação estática, sem backend.
+React 18, TypeScript, Vite 8, Tailwind CSS 4, Radix UI, Dexie/IndexedDB, Recharts e Lucide. Frontend estático com função serverless opcional para interpretação de voz.
 
 ## Desenvolvimento
 
@@ -41,7 +41,7 @@ npm run build
 npm run preview
 ```
 
-Não configure segredos em variáveis `VITE_`: valores desse prefixo são incluídos no código entregue ao navegador. Nenhuma chave de API é necessária para o funcionamento atual.
+Não configure segredos em variáveis `VITE_`: valores desse prefixo são incluídos no código entregue ao navegador. Registro manual não exige chave. O recurso de voz exige chave própria do Google AI Studio configurada pelo usuário no navegador; nunca inclua a chave em variáveis `VITE_*`.
 
 ## Critérios antes do deploy público
 
@@ -51,12 +51,14 @@ Não configure segredos em variáveis `VITE_`: valores desse prefixo são inclu�
 - [ ] Confirmar que um backup inválido não apaga os dados existentes e que o usuário compreende a substituição na restauração.
 - [ ] Testar teclado (Tab, Enter, Esc), foco, zoom de 200%, viewport móvel e pelo menos um leitor de tela.
 - [ ] Revisar mensagens e fluxos com pessoas com deficiência, quando possível; testes técnicos não equivalem a validação de acessibilidade.
-- [ ] Conferir HTTPS, configuração do domínio, respostas HTTP e publicação estática no provedor escolhido.
+- [ ] Conferir HTTPS, configuração do domínio, respostas HTTP e função de voz na Vercel.
+- [ ] Configurar proteção contra abuso/rate limiting no firewall da Vercel; BYOK e verificação de Origin não substituem esse controle.
+- [ ] Remover `GEMINI_API_KEY` e `VOICE_TEST_TOKEN` legados da Vercel e confirmar variáveis `VOICE_ENABLED` e `VITE_VOICE_ENABLED` em Production.
 - [ ] Confirmar ausência de chaves, arquivos `.env` e dados reais no bundle de produção.
 
 ## Deploy e manutenção
 
-Publicar somente depois dos critérios de aceitação. Um provedor de hospedagem estática, como a Vercel, é suficiente para a arquitetura atual. Revisar dependências e falhas de segurança periodicamente, com alterações pequenas e testadas. Evitar ampliar o escopo sem necessidade demonstrada.
+Publicar somente depois dos critérios de aceitação. A Vercel hospeda o frontend e a função serverless opcional de voz. Revisar dependências e falhas de segurança periodicamente, com alterações pequenas e testadas. Evitar ampliar o escopo sem necessidade demonstrada.
 
 ## Licença
 

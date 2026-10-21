@@ -35,6 +35,35 @@ export default function App() {
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mimeTypeRef = useRef<string>('audio/webm');
+  const [voiceKey, setVoiceKey] = useState(() => {
+    try { return localStorage.getItem('planejai-gemini-key') || ''; } catch { return ''; }
+  });
+  const [keyDraft, setKeyDraft] = useState('');
+  const [showKeySettings, setShowKeySettings] = useState(false);
+
+  const saveVoiceKey = () => {
+    const key = keyDraft.trim();
+    if (key.length < 8 || key.length > 256 || !/^[\x21-\x7E]+$/.test(key)) {
+      showToast('Informe uma chave válida do Google AI Studio.');
+      return;
+    }
+    try {
+      localStorage.setItem('planejai-gemini-key', key);
+      setVoiceKey(key);
+      setKeyDraft('');
+      setShowKeySettings(false);
+      showToast('Chave salva somente neste navegador.');
+    } catch {
+      showToast('Não foi possível salvar a chave neste navegador.');
+    }
+  };
+  const deleteVoiceKey = () => {
+    try { localStorage.removeItem('planejai-gemini-key'); } catch { /* private mode */ }
+    setVoiceKey('');
+    setKeyDraft('');
+    setShowKeySettings(false);
+    showToast('Chave removida deste navegador.');
+  };
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -42,7 +71,7 @@ export default function App() {
   };
 
   const toggleRecording = useCallback(async () => {
-    if (!import.meta.env.DEV) {
+    if (import.meta.env.VITE_VOICE_ENABLED !== 'true') {
       setIsManualOpen(true);
       showToast('Registro por voz desabilitado até a integração segura com a API.');
       return;
@@ -50,6 +79,12 @@ export default function App() {
     if (isRecording) {
       mediaRecorderRef.current?.stop();
       if (timerRef.current) clearTimeout(timerRef.current);
+      return;
+    }
+
+    if (!voiceKey) {
+      setShowKeySettings(true);
+      showToast('Configure sua chave Gemini para usar o microfone.');
       return;
     }
 
@@ -61,7 +96,8 @@ export default function App() {
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+      const mimeType = ['audio/webm', 'audio/mp4', 'audio/ogg'].find(type => MediaRecorder.isTypeSupported(type));
+      if (!mimeType) throw new Error('Formato de áudio não suportado');
       const mediaRecorder = new MediaRecorder(stream, { mimeType });
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
@@ -72,8 +108,6 @@ export default function App() {
       };
 
       mediaRecorder.onstop = async () => {
-        console.log('mimeType real:', mediaRecorder.mimeType);
-        console.log('chunks:', chunksRef.current.length, 'blob size:', chunksRef.current.reduce((a, b) => a + b.size, 0));
         
         setIsRecording(false);
         stream.getTracks().forEach(track => track.stop());
@@ -85,11 +119,16 @@ export default function App() {
 
         setIsProcessing(true);
         const blob = new Blob(chunksRef.current, { type: mimeTypeRef.current });
+        if (blob.size > 160_000) {
+          setIsProcessing(false);
+          showToast('Áudio muito grande. Tente novamente.');
+          return;
+        }
         const reader = new FileReader();
         reader.onloadend = async () => {
           const base64 = (reader.result as string).split(',')[1];
           try {
-            const result = await extractTransactionFromAudio(base64, mimeTypeRef.current);
+            const result = await extractTransactionFromAudio(base64, mimeTypeRef.current, voiceKey);
             setExtractedData({
               type: result.tipo === 'entrada' ? 'income' : 'expense',
               amount: result.valor,
@@ -98,7 +137,7 @@ export default function App() {
             });
             setShowVoiceConfirmation(true);
           } catch {
-            showToast('Registro por voz indisponível por segurança. Use a entrada manual.');
+            showToast('Não foi possível interpretar o áudio. Use o registro manual.');
           } finally {
             setIsProcessing(false);
           }
@@ -113,13 +152,13 @@ export default function App() {
         if (mediaRecorderRef.current?.state === 'recording') {
           mediaRecorderRef.current.stop();
         }
-      }, 4000);
+      }, 5000);
     } catch (err) {
       console.error('Erro ao acessar microfone:', err);
       setIsManualOpen(true);
       showToast('Não consegui acessar o microfone. Vamos digitar?');
     }
-  }, [isRecording]);
+  }, [isRecording, voiceKey]);
 
   const handleVoiceConfirm = async () => {
     if (!extractedData) return;
@@ -172,21 +211,64 @@ export default function App() {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto pb-24">
+      <div className="flex-1 overflow-y-auto pb-32">
         <Dashboard onEdit={handleEdit} onOpenInsights={() => setIsInsightsOpen(true)} />
         <TranslatorDrawer open={isTranslatorOpen} onOpenChange={setIsTranslatorOpen} />
         <BackupControls />
+        {import.meta.env.VITE_VOICE_ENABLED === 'true' && (
+          <section className="w-full max-w-lg mx-auto px-4 pb-6" aria-label="Configuração do microfone">
+            <button type="button" onClick={() => { setKeyDraft(''); setShowKeySettings(value => !value); }}
+              className="text-sm underline underline-offset-4 text-text/80 focus-visible:ring-2 focus-visible:ring-calm">
+              {voiceKey ? 'Configurar ou apagar chave do microfone' : 'Configurar chave do Google AI Studio'}
+            </button>
+            {showKeySettings && (
+              <div className="mt-3 p-4 rounded-xl border border-calm/40 bg-[#3A3A3A] space-y-3">
+                <p className="text-sm">Prova de conceito: sua chave fica neste navegador, sem criptografia. Scripts deste site podem acessá-la. O áudio e a chave são enviados à função da Vercel e depois ao Google para interpretação. Não use uma chave com faturamento habilitado sem entender os riscos.</p>
+                <label htmlFor="voice-key" className="block text-sm font-medium">Chave Gemini do AI Studio</label>
+                <input id="voice-key" type="password" autoComplete="off" spellCheck={false}
+                  value={keyDraft} onChange={event => setKeyDraft(event.target.value)}
+                  placeholder={voiceKey ? 'Nova chave (para substituir)' : 'Cole sua chave'}
+                  className="w-full min-h-12 rounded-lg p-3 bg-bg text-text border border-calm/50" />
+                <div className="flex gap-3 flex-wrap">
+                  <button type="button" onClick={saveVoiceKey} className="rounded-lg bg-success text-[#0F2A1A] font-bold px-4 py-3">Salvar chave</button>
+                  {voiceKey && <button type="button" onClick={deleteVoiceKey} className="rounded-lg border border-alert px-4 py-3">Apagar chave</button>}
+                  <button type="button" onClick={() => setShowKeySettings(false)} className="rounded-lg border border-calm/40 px-4 py-3">Cancelar</button>
+                </div>
+              </div>
+            )}
+          </section>
+        )}
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 z-40 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-5 bg-gradient-to-t from-bg via-bg/95 to-transparent pointer-events-none">
+      <div className="fixed bottom-0 left-0 right-0 z-40 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 bg-gradient-to-t from-bg via-bg/95 to-transparent pointer-events-none">
         <div className="max-w-lg mx-auto pointer-events-auto">
-          <button type="button" onClick={() => setIsManualOpen(true)} className="w-full min-h-14 rounded-2xl bg-success text-[#0F2A1A] font-bold text-base flex items-center justify-center gap-3 shadow-xl shadow-black/25 hover:brightness-105 transition focus-visible:ring-4 focus-visible:ring-calm" aria-label="Registrar entrada ou saída">
-            <Plus size={22} strokeWidth={2.5} aria-hidden="true" /> Adicionar movimentação
-          </button>
-          {import.meta.env.DEV && (
-            <button type="button" onClick={toggleRecording} disabled={isProcessing} className="mt-2 mx-auto flex items-center justify-center gap-2 text-xs text-text/60 underline underline-offset-4" aria-label="Testar microfone em desenvolvimento">
-              {isProcessing ? <Loader2 size={14} className="animate-spin" /> : isRecording ? <MicOff size={14} /> : <Mic size={14} />}
-              {isProcessing ? 'Processando áudio' : isRecording ? 'Parar teste de voz' : 'Teste de voz (desenvolvimento)'}
+          {import.meta.env.VITE_VOICE_ENABLED === 'true' ? (
+            <div className="flex gap-3 items-stretch">
+              <button
+                type="button"
+                onClick={toggleRecording}
+                disabled={isProcessing}
+                aria-label={isProcessing ? 'Processando áudio' : isRecording ? 'Parar gravação de voz' : 'Registrar movimentação por voz'}
+                aria-pressed={isRecording}
+                aria-busy={isProcessing}
+                className={`flex-[3] min-w-0 min-h-16 px-3 rounded-2xl font-bold text-base flex items-center justify-center gap-2 shadow-lg transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-calm disabled:opacity-70 disabled:cursor-wait ${isRecording ? 'bg-alert text-[#2D1600]' : 'bg-success text-[#0F2A1A] hover:brightness-105'}`}
+              >
+                {isProcessing ? <Loader2 size={24} className="animate-spin shrink-0" aria-hidden="true" /> : isRecording ? <MicOff size={24} className="shrink-0" aria-hidden="true" /> : <Mic size={24} className="shrink-0" aria-hidden="true" />}
+                <span>{isProcessing ? 'Processando...' : isRecording ? 'Parar gravação' : 'Registrar por voz'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsManualOpen(true)}
+                className="flex-[2] min-w-0 min-h-16 px-2 rounded-2xl border-2 border-calm/70 bg-[#3A3A3A] text-text font-semibold text-sm flex items-center justify-center gap-1.5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-calm"
+                aria-label="Adicionar movimentação manualmente"
+              >
+                <Plus size={20} className="shrink-0" aria-hidden="true" />
+                <span>Digitar</span>
+              </button>
+            </div>
+          ) : (
+            <button type="button" onClick={() => setIsManualOpen(true)} className="w-full min-h-14 rounded-2xl bg-success text-[#0F2A1A] font-bold text-base flex items-center justify-center gap-3 shadow-xl shadow-black/25 hover:brightness-105 transition focus-visible:ring-4 focus-visible:ring-calm" aria-label="Registrar entrada ou saída">
+              <Plus size={22} strokeWidth={2.5} aria-hidden="true" /> Adicionar movimentação
             </button>
           )}
         </div>
