@@ -5,7 +5,7 @@ O botão de voz fica **desabilitado por padrão**. Não ativar em produção pú
 ## Variáveis na Vercel
 
 - `GEMINI_API_KEY`: segredo somente no servidor; **nunca** `VITE_GEMINI_API_KEY`.
-- `GEMINI_MODEL`: modelo habilitado para áudio e disponível na cota gratuita do projeto; padrão provisório `gemini-2.5-flash-lite`, sujeito à disponibilidade da conta.
+- `GEMINI_MODEL`: modelo habilitado para áudio e disponível na cota gratuita do projeto; padrão `gemini-3.5-flash-lite`, sujeito à disponibilidade da conta.
 - `VOICE_ENABLED=true`: libera a função **somente após** a proteção de abuso estar configurada.
 - `VITE_VOICE_ENABLED=true`: exibe o botão de voz na compilação do frontend; requer novo build.
 
