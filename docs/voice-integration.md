@@ -1,30 +1,30 @@
-# Integração de voz — PR experimental
+# Registro por voz — prova de conceito BYOK
 
-O botão de voz fica **desabilitado por padrão**. Não ativar em produção pública até configurar proteção efetiva contra abuso (rate limiting persistente no edge/WAF, orçamento/cotas e observabilidade). Uma função serverless isolada não oferece limite confiável por IP usando memória local.
+O Planejaí é uma demonstração, não um serviço financeiro em produção. O usuário informa sua própria chave do Google AI Studio uma vez; ela é lembrada no localStorage deste navegador, sem criptografia, com opções para substituir e apagar. Scripts executados na origem do aplicativo podem ler a chave. A chave não faz parte dos backups de transações e não é persistida no servidor.
 
-## Variáveis na Vercel
+Fluxo: microfone (máximo 5 segundos / 160 kB) → POST HTTPS /api/voice (áudio e chave própria) → Gemini 3.5 Flash-Lite → JSON validado → confirmação humana → IndexedDB. O Gemini nunca escreve diretamente no banco. Sem chave, o registro manual continua disponível.
 
-- `GEMINI_API_KEY`: segredo somente no servidor; **nunca** `VITE_GEMINI_API_KEY`.
-- `GEMINI_MODEL`: modelo habilitado para áudio e disponível na cota gratuita do projeto; padrão `gemini-3.5-flash-lite`, sujeito à disponibilidade da conta.
-- `VOICE_ENABLED=true`: libera a função **somente após** a proteção de abuso estar configurada.
-- `VITE_VOICE_ENABLED=true`: exibe o botão de voz na compilação do frontend; requer novo build.
+## Configuração
 
-Na primeira implantação, mantenha ambos os flags desativados. Se a cota acabar, o registro manual continua funcionando.
+- Build público: `VITE_VOICE_ENABLED=true` na Vercel Production e Preview.
+- Função: `VOICE_ENABLED=true` na Vercel Production e Preview, somente depois de configurar proteção operacional (firewall/rate limits) e revisar o deploy.
+- `GEMINI_MODEL` opcional; padrão `gemini-3.5-flash-lite`.
+- Remover `GEMINI_API_KEY` e `VOICE_TEST_TOKEN` das variáveis de ambiente após validar a migração. A função BYOK não as utiliza.
+- Nunca inserir uma chave em variáveis `VITE_*`, URLs ou repositório.
 
-## Testes necessários antes de liberar
+## Limitações e segurança
 
-1. Verificar suporte ao modelo e cota no Google AI Studio, sem habilitar faturamento pago.
-2. Configurar proteção antiabuso efetiva na Vercel (rate limiting no edge ou serviço equivalente) e verificar requisições repetidas.
-3. Testar no deploy de preview, em celular real, áudios WebM/MP4/OGG, permissão negada e timeout.
-4. Testar valores ambíguos, áudio vazio, áudio acima de 160 KB, respostas inválidas e HTTP 429.
-5. Conferir que a confirmação é obrigatória e que nada é gravado antes dela.
-6. Conferir que o segredo não aparece em arquivos do bundle, logs nem respostas.
-7. Revisar consentimento e privacidade: áudio é enviado ao serviço externo para interpretação.
+- O armazenamento local da chave não é um cofre. Recomendar chave exclusiva, sem faturamento ou com cotas estritas.
+- A função não autentica usuários. A verificação de Origin é defesa complementar e **não** é rate limiting; antes de exposição pública, configurar limites na Vercel para impedir abuso da infraestrutura. BYOK limita o gasto da chave do projeto, mas não impede chamadas automatizadas.
+- Áudio e chave transitam pela Vercel e são encaminhados ao Google. Não são registrados pelo código da função, mas políticas de tratamento dos provedores continuam aplicáveis.
+- O endpoint rejeita métodos diferentes de POST, origens incompatíveis, chaves malformadas e áudio acima do limite; timeout de 12 segundos.
+- Transações financeiras ficam apenas no IndexedDB local; backup JSON não criptografado. Limpar dados do navegador pode apagar histórico e chave.
+- Se a chave for comprometida, revogar no Google AI Studio e substituí-la.
 
-Não há autenticação no MVP; o endpoint é público quando ativado. A proteção por cota do provedor não substitui controles de abuso do aplicativo.
+## Checklist antes do encerramento
 
-## Teste restrito no Preview
-
-O endpoint exige também `VOICE_TEST_TOKEN` (segredo de pelo menos 32 caracteres). O frontend solicita esse token no primeiro clique do microfone, mantendo-o apenas em memória até a página ser recarregada. O servidor confere o cabeçalho `x-voice-test-token` antes de chamar o Gemini. Não coloque esse token em variáveis `VITE_*` nem em arquivos versionados. O token compartilhado é apenas uma barreira para teste privado, não rate limiting nem autenticação por usuário. Caso seja divulgado, rotacione imediatamente.
-
-Para Preview restrito: `GEMINI_API_KEY`, `VOICE_TEST_TOKEN` e `VOICE_ENABLED=true` no ambiente Preview, e `VITE_VOICE_ENABLED=true` durante o build. Faça um novo deploy após configurar. Não configure essas flags em Production. O token de teste pode ser gerado localmente com `openssl rand -hex 32` e colado somente no painel da Vercel e no prompt do navegador de teste. Confirme previamente o modelo/cota gratuita no AI Studio. Antes de produção pública, implementar rate limiting persistente/edge e política de privacidade para envio de áudio.
+1. `npm run build` e `npm audit` sem falhas relevantes.
+2. No celular HTTPS: inserir chave, recarregar, confirmar que persiste, substituir e apagar.
+3. Testar entrada, saída, valor ambíguo, permissão de microfone negada, erro do Google e fallback manual.
+4. Testar confirmação/edição antes de gravar, backup e restauração.
+5. Configurar proteção de tráfego na Vercel; publicar somente após revisão. Documentar que é demonstração experimental.
