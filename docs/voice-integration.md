@@ -22,3 +22,9 @@ Na primeira implantação, mantenha ambos os flags desativados. Se a cota acabar
 7. Revisar consentimento e privacidade: áudio é enviado ao serviço externo para interpretação.
 
 Não há autenticação no MVP; o endpoint é público quando ativado. A proteção por cota do provedor não substitui controles de abuso do aplicativo.
+
+## Teste restrito no Preview
+
+O endpoint exige também `VOICE_TEST_TOKEN` (segredo de pelo menos 32 caracteres). O frontend solicita esse token no primeiro clique do microfone, mantendo-o apenas em memória até a página ser recarregada. O servidor confere o cabeçalho `x-voice-test-token` antes de chamar o Gemini. Não coloque esse token em variáveis `VITE_*` nem em arquivos versionados. O token compartilhado é apenas uma barreira para teste privado, não rate limiting nem autenticação por usuário. Caso seja divulgado, rotacione imediatamente.
+
+Para Preview restrito: `GEMINI_API_KEY`, `VOICE_TEST_TOKEN` e `VOICE_ENABLED=true` no ambiente Preview, e `VITE_VOICE_ENABLED=true` durante o build. Faça um novo deploy após configurar. Não configure essas flags em Production. O token de teste pode ser gerado localmente com `openssl rand -hex 32` e colado somente no painel da Vercel e no prompt do navegador de teste. Confirme previamente o modelo/cota gratuita no AI Studio. Antes de produção pública, implementar rate limiting persistente/edge e política de privacidade para envio de áudio.
