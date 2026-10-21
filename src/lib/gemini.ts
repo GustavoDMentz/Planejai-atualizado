@@ -20,12 +20,12 @@ function isTransaction(value: unknown): value is ExtractedTransaction {
 export async function extractTransactionFromAudio(
   base64Audio: string,
   mimeType: string = 'audio/webm',
-  testToken: string
+  apiKey: string
 ): Promise<ExtractedTransaction> {
   const response = await fetch('/api/voice', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-voice-test-token': testToken },
-    body: JSON.stringify({ audio: base64Audio, mimeType }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ audio: base64Audio, mimeType, apiKey }),
   });
   if (!response.ok) throw new Error('Serviço de voz indisponível.');
   return validateExtractedTransaction(await response.json());
