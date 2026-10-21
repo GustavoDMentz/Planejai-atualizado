@@ -42,8 +42,8 @@ export default async function handler(req, res) {
   const contentLength = Number(req.headers['content-length']);
   if (Number.isFinite(contentLength) && contentLength > 230_000) return res.status(413).json({ error: 'Requisição grande demais.' });
   const { apiKey } = req.body || {};
-  if (typeof apiKey !== 'string' || apiKey.length < 15 || apiKey.length > 256 ||
-      !/^[A-Za-z0-9_-]+$/.test(apiKey)) {
+  if (typeof apiKey !== 'string' || apiKey.length < 8 || apiKey.length > 256 ||
+      !/^[\x21-\x7E]+$/.test(apiKey)) {
     return res.status(400).json({ error: 'Chave Gemini inválida.' });
   }
   const { audio, mimeType } = req.body || {};
