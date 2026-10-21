@@ -1,4 +1,3 @@
-import { timingSafeEqual } from 'node:crypto';
 /** Vercel Node.js Function. No Gemini credentials are exposed to the browser. */
 const MAX_AUDIO_BYTES = 160_000;
 const ALLOWED_MIME = new Set(['audio/webm', 'audio/mp4', 'audio/ogg']);
@@ -26,16 +25,27 @@ export default async function handler(req, res) {
   if (process.env.VOICE_ENABLED !== 'true') {
     return res.status(503).json({ error: 'Registro por voz ainda não habilitado.' });
   }
-  // Preview-only shared test secret. This is not user authentication or rate limiting.
-  const expected = process.env.VOICE_TEST_TOKEN;
-  const supplied = req.headers['x-voice-test-token'];
-  if (typeof expected !== 'string' || expected.length < 32 ||
-      typeof supplied !== 'string' || supplied.length !== expected.length ||
-      !timingSafeEqual(Buffer.from(supplied), Buffer.from(expected))) {
-    return res.status(401).json({ error: 'Acesso de teste não autorizado.' });
+  // BYOK: no project-wide Gemini key, no test bearer token.
+  // Origin checks reduce accidental cross-site use, but are not authentication.
+  const origin = req.headers.origin;
+  const host = req.headers['x-forwarded-host'] || req.headers.host;
+  if (typeof origin !== 'string' || typeof host !== 'string') {
+    return res.status(403).json({ error: 'Origem não autorizada.' });
   }
-  const key = process.env.GEMINI_API_KEY;
-  if (!key) return res.status(503).json({ error: 'Serviço de voz não configurado.' });
+  try {
+    if (new URL(origin).host !== host || new URL(origin).protocol !== 'https:' && !origin.startsWith('http://localhost:')) {
+      return res.status(403).json({ error: 'Origem não autorizada.' });
+    }
+  } catch {
+    return res.status(403).json({ error: 'Origem não autorizada.' });
+  }
+  const contentLength = Number(req.headers['content-length']);
+  if (Number.isFinite(contentLength) && contentLength > 230_000) return res.status(413).json({ error: 'Requisição grande demais.' });
+  const { apiKey } = req.body || {};
+  if (typeof apiKey !== 'string' || apiKey.length < 15 || apiKey.length > 256 ||
+      !/^[A-Za-z0-9_-]+$/.test(apiKey)) {
+    return res.status(400).json({ error: 'Chave Gemini inválida.' });
+  }
   const { audio, mimeType } = req.body || {};
   if (typeof audio !== 'string' || typeof mimeType !== 'string' ||
       !ALLOWED_MIME.has(mimeType) || audio.length > Math.ceil(MAX_AUDIO_BYTES * 4 / 3) + 8 ||
@@ -53,7 +63,7 @@ export default async function handler(req, res) {
       `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(MODEL)}:generateContent`,
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
         signal: controller.signal,
         body: JSON.stringify({
           contents: [{ role: 'user', parts: [
